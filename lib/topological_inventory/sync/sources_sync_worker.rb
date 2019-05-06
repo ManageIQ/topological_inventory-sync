@@ -91,7 +91,8 @@ module TopologicalInventory
         {
           "x-rh-identity" => Base64.strict_encode64(
             JSON.dump({"identity" => {"account_number" => tenant}})
-          )
+          ),
+          "x-rh-insights-request-id" => "1"
         }
       end
     end

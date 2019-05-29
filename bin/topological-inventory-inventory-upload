@@ -6,6 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 STDOUT.sync = true
 
 require "bundler/setup"
+require "topological_inventory/sync/logging"
 require "topological_inventory/sync/inventory_upload_worker"
 
 def parse_args
@@ -21,6 +22,13 @@ def parse_args
 end
 
 args = parse_args
+
+require "sources-api-client"
+SourcesApiClient.configure do |config|
+  config.scheme = ENV["SOURCES_SCHEME"] || "http"
+  config.host   = "#{ENV["SOURCES_HOST"]}:#{ENV["SOURCES_PORT"]}"
+  config.logger = TopologicalInventory::Sync.logger
+end
 
 topological_inventory_sync = TopologicalInventory::Sync::InventoryUploadWorker.new(args[:queue_host], args[:queue_port])
 topological_inventory_sync.run

@@ -62,6 +62,20 @@ module TopologicalInventory
           :session_timeout => 60 #seconds
         }
       end
+
+      def sources_api_client(tenant = nil)
+        api_client = SourcesApiClient::ApiClient.new
+        api_client.default_headers.merge!(identity_headers(tenant)) if tenant
+        SourcesApiClient::DefaultApi.new(api_client)
+      end
+
+      def identity_headers(tenant)
+        {
+          "x-rh-identity" => Base64.strict_encode64(
+            JSON.dump({"identity" => {"account_number" => tenant}})
+          )
+        }
+      end
     end
   end
 end

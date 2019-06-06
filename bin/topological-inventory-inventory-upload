@@ -16,6 +16,7 @@ def parse_args
         :default => ENV.fetch("QUEUE_HOST", "localhost")
     opt :queue_port, "Port of the Platform's kafka queue", :type => :int,
         :default => (ENV.fetch("QUEUE_PORT", 9092)).to_i, :required => false
+    opt :ingress_api, "Hostname of the ingress-api route", :type => :string, :default => ENV["INGRESS_API"] || "http://localhost:9292"
   end
 
   opts
@@ -29,6 +30,13 @@ SourcesApiClient.configure do |config|
   config.host   = "#{ENV["SOURCES_HOST"]}:#{ENV["SOURCES_PORT"]}"
   config.logger = TopologicalInventory::Sync.logger
 end
+
+ingress_api_uri = URI(args[:ingress_api])
+
+require "topological_inventory-ingress_api-client"
+TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
+TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
+
 
 topological_inventory_sync = TopologicalInventory::Sync::InventoryUploadWorker.new(args[:queue_host], args[:queue_port])
 topological_inventory_sync.run

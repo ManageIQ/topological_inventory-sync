@@ -13,7 +13,7 @@ module TopologicalInventory
       end
 
       def run
-        logger.info("Starting Topological Inventory Sync Worker for #{queue_name}...")
+        logger.info("Starting #{worker_name} for #{queue_name}...")
 
         initial_sync
 
@@ -61,6 +61,10 @@ module TopologicalInventory
           :service         => queue_name,
           :session_timeout => 60 #seconds
         }
+      end
+
+      def worker_name
+        "Topological Inventory Sync Worker"
       end
 
       def sources_api_client(tenant = nil)

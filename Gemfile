@@ -12,6 +12,7 @@ gem "topological_inventory-core",               :git => "https://github.com/Mana
 gem "topological_inventory-ingress_api-client", :git => "https://github.com/ManageIQ/topological_inventory-ingress_api-client-ruby", :branch => "master"
 
 gem "typhoeus"
+gem 'http'
 
 group :development, :test do
   gem "rake"

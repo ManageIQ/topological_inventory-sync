@@ -17,35 +17,68 @@ module TopologicalInventory
         "topological-inventory-upload-processor"
       end
 
+      def worker_name
+        "Topological Inventory Inventory Upload Worker"
+      end
+
       def perform(message)
         payload = JSON.parse(message.payload)
         return unless payload["service"] == "topological-inventory"
 
-        response = download_file(payload["url"])
-
-        if response.return_code == :ok # response.success? doesn't work for file:///...
-          sources_api = sources_api_client(payload["rh_account"])
-          data = JSON.parse(response.body)
-
-          # Find Source Type
-          source_type = find_source_type(data["source_type"], sources_api)
-          # Create source with first payload
-          source = find_or_create_source(sources_api, source_type.id, data['name'], data["source"])
-
-          if source.present?
-            send_to_ingress_api(data, response.body)
-          else
-            raise "Failed to create Source"
+        openurl(payload["url"]) do |io|
+          untargz(io) do |file|
+            process_data(payload, file.read)
           end
-        else
-          failed_to_get_file_error(response)
         end
       end
 
       private
 
-      def worker_name
-        "Topological Inventory Inventory Upload Worker"
+      def process_data(payload, file)
+        sources_api = sources_api_client(payload["rh_account"])
+        data = JSON.parse(file)
+
+        # Find Source Type
+        source_type = find_source_type(data["source_type"], sources_api)
+        # Create source with first payload
+        source = find_or_create_source(sources_api, source_type.id, data['name'], data["source"])
+
+        if source.present?
+          send_to_ingress_api(data, file)
+        else
+          raise "Failed to create Source"
+        end
+      end
+
+      def openurl(url)
+        require "http"
+
+        uri = URI(url)
+        if uri.scheme.nil?
+          File.open(url) { |f| yield f }
+        elsif uri.scheme == 'file'
+          request = Typhoeus::Request.new(url)
+          response = request.run
+
+          if response.return_code == :ok # response.success? doesn't work for file:///...
+            yield StringIO.new(response.body)
+          else
+             failed_to_get_file_error(response)
+          end
+        else
+          response = HTTP.get(uri)
+          response.body.stream!
+          yield response.body
+        end
+      end
+
+      def untargz(io)
+        require "rubygems/package"
+        Zlib::GzipReader.wrap(io) do |gz|
+          Gem::Package::TarReader.new(gz) do |tar|
+            tar.each { |entry| yield entry }
+          end
+        end
       end
 
       def download_file(url)

@@ -15,8 +15,12 @@ def parse_args
         :default => ENV.fetch("QUEUE_HOST", "localhost")
     opt :queue_port, "Port of the Platform's kafka queue", :type => :int,
         :default => (ENV.fetch("QUEUE_PORT", 9092)).to_i, :required => false
-    opt :ingress_api, "Hostname of the ingress-api route", :type => :string,
-        :default => ENV.fetch("INGRESS_API", "http://localhost:9292")
+    opt :ingress_api_service_host, "Ingress API service URL", :type => :string,
+        :required => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_HOST"].nil?,
+        :default => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_HOST"]
+    opt :ingress_api_service_port, "Ingress API service URL port", :type => :string,
+        :required => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_PORT"].nil?,
+        :default => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_PORT"]
   end
 
   opts
@@ -32,10 +36,11 @@ SourcesApiClient.configure do |config|
 end
 
 require "topological_inventory-ingress_api-client"
-ingress_api_uri = URI(args[:ingress_api])
-
-TopologicalInventoryIngressApiClient.configure.scheme = ingress_api_uri.scheme || "http"
-TopologicalInventoryIngressApiClient.configure.host   = "#{ingress_api_uri.host}:#{ingress_api_uri.port}"
+TopologicalInventoryIngressApiClient.configure do |config|
+  config.scheme = "http"
+  config.host   = "#{args[:ingress_api_service_host]}:#{args[:ingress_api_service_port]}"
+  config.logger = TopologicalInventory::Sync.logger
+end
 
 topological_inventory_sync = TopologicalInventory::Sync::InventoryUpload::ProcessorWorker.new(args[:queue_host], args[:queue_port])
 topological_inventory_sync.run

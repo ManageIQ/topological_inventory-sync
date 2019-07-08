@@ -6,7 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 STDOUT.sync = true
 
 require "bundler/setup"
-require "topological_inventory/sync/inventory_upload_validator_worker"
+require "topological_inventory/sync/inventory_upload/validator_worker"
 require "topological_inventory/schema"
 
 def parse_args
@@ -23,5 +23,5 @@ end
 
 args = parse_args
 
-topological_inventory_sync = TopologicalInventory::Sync::InventoryUploadValidatorWorker.new(args[:queue_host], args[:queue_port])
+topological_inventory_sync = TopologicalInventory::Sync::InventoryUpload::ValidatorWorker.new(args[:queue_host], args[:queue_port])
 topological_inventory_sync.run

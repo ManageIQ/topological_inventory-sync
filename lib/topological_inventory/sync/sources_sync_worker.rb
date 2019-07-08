@@ -1,5 +1,3 @@
-require "base64"
-require "json"
 require "rest-client"
 require "topological_inventory/sync/worker"
 require "uri"
@@ -8,6 +6,10 @@ module TopologicalInventory
   class Sync
     class SourcesSyncWorker < Worker
       include Logging
+
+      def worker_name
+        "Topological Inventory Sync Worker"
+      end
 
       def queue_name
         "platform.sources.event-stream"
@@ -67,11 +69,6 @@ module TopologicalInventory
         @tenants_by_external_tenant[external_tenant] ||= Tenant.find_or_create_by(:external_tenant => external_tenant)
       end
 
-      def sources_api_client(tenant = nil)
-        api_client = SourcesApiClient::ApiClient.new
-        api_client.default_headers.merge!(identity_headers(tenant)) if tenant
-        SourcesApiClient::DefaultApi.new(api_client)
-      end
 
       def tenants
         response = RestClient.get(internal_tenants_url, identity_headers("topological_inventory-sources_sync"))
@@ -85,14 +82,6 @@ module TopologicalInventory
           :port   => config.host.split(":").last,
           :path   => "/internal/v1.0/tenants"
         ).to_s
-      end
-
-      def identity_headers(tenant)
-        {
-          "x-rh-identity" => Base64.strict_encode64(
-            JSON.dump({"identity" => {"account_number" => tenant}})
-          )
-        }
       end
     end
   end

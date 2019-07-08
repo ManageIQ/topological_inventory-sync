@@ -1,9 +1,12 @@
-require "topological_inventory/sync/inventory_upload_validator_worker"
+require_relative '../../../helpers/inventory_upload_helper'
+require "topological_inventory/sync/inventory_upload/validator_worker"
 
-RSpec.describe TopologicalInventory::Sync::InventoryUploadValidatorWorker do
+RSpec.describe TopologicalInventory::Sync::InventoryUpload::ValidatorWorker do
+  include InventoryUploadHelper
+
   context "#perform" do
     let(:validator) { described_class.new("localhost", "9092") }
-    let(:message)         { ManageIQ::Messaging::ReceivedMessage.new(nil, nil, payload, nil, nil) }
+    let(:message)         { ManageIQ::Messaging::ReceivedMessage.new(nil, nil, payload, nil, nil, nil) }
     let(:request_id) { "52df9f748eabcfeb" }
     let(:file_path) { "/tmp/uploads/insights-upload-perm-test/#{request_id}" }
     let(:payload) do
@@ -13,7 +16,10 @@ RSpec.describe TopologicalInventory::Sync::InventoryUploadValidatorWorker do
       \"url\":\"/tmp/upload/schema.tar.gz\"}"
     end
 
-    before { expect(validator).to receive(:parse_inventory_payload).and_return(inventory) }
+    before do
+      expect(TopologicalInventory::Sync::InventoryUpload::Parser)
+        .to receive(:open_url).and_yield(targz(inventory))
+    end
 
     context "with a valid inventory payload" do
       let(:inventory) do

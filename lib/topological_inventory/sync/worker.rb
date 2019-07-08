@@ -1,3 +1,5 @@
+require "json"
+require "base64"
 require "manageiq-messaging"
 require "topological_inventory/sync/logging"
 
@@ -13,12 +15,19 @@ module TopologicalInventory
       end
 
       def run
-        logger.info("Starting Topological Inventory Sync Worker for #{queue_name}...")
+        logger.info("Starting #{worker_name} for #{queue_name}...")
 
         initial_sync
 
         self.messaging_client = ManageIQ::Messaging::Client.open(messaging_client_opts)
-        messaging_client.subscribe_topic(subscribe_opts) { |message| perform(message) }
+        messaging_client.subscribe_topic(subscribe_opts) do |message|
+          begin
+            perform(message)
+          rescue => err
+            logger.error(err)
+            logger.error(err.backtrace.join("\n"))
+          end
+        end
       ensure
         messaging_client&.close
       end
@@ -45,6 +54,10 @@ module TopologicalInventory
         raise NotImplementedError, "#{__method__} must be implemented in a subclass"
       end
 
+      def worker_name
+        raise NotImplementedError, "#{__method__} must be implemented in a subclass"
+      end
+
       def messaging_client_opts
         {
           :protocol   => :Kafka,
@@ -60,6 +73,20 @@ module TopologicalInventory
           :persist_ref     => persist_ref,
           :service         => queue_name,
           :session_timeout => 60 #seconds
+        }
+      end
+
+      def sources_api_client(tenant = nil)
+        api_client = SourcesApiClient::ApiClient.new
+        api_client.default_headers.merge!(identity_headers(tenant)) if tenant
+        SourcesApiClient::DefaultApi.new(api_client)
+      end
+
+      def identity_headers(tenant)
+        {
+          "x-rh-identity" => Base64.strict_encode64(
+            JSON.dump({"identity" => {"account_number" => tenant}})
+          )
         }
       end
     end

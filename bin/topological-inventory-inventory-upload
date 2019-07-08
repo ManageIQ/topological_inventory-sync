@@ -6,7 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 STDOUT.sync = true
 
 require "bundler/setup"
-require "topological_inventory/sync/inventory_upload_worker"
+require "topological_inventory/sync/inventory_upload/processor_worker"
 
 def parse_args
   require 'optimist'
@@ -15,6 +15,10 @@ def parse_args
         :default => ENV.fetch("QUEUE_HOST", "localhost")
     opt :queue_port, "Port of the Platform's kafka queue", :type => :int,
         :default => (ENV.fetch("QUEUE_PORT", 9092)).to_i, :required => false
+    opt :ingress_api_host, "Ingress API service URL", :type => :string,
+        :default => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_HOST"] || "localhost"
+    opt :ingress_api_port, "Ingress API service URL port", :type => :int,
+        :default => (ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_PORT"] || 9292).to_i
   end
 
   opts
@@ -22,5 +26,19 @@ end
 
 args = parse_args
 
-topological_inventory_sync = TopologicalInventory::Sync::InventoryUploadWorker.new(args[:queue_host], args[:queue_port])
+require "sources-api-client"
+SourcesApiClient.configure do |config|
+  config.scheme = ENV["SOURCES_SCHEME"] || "http"
+  config.host   = "#{ENV["SOURCES_HOST"]}:#{ENV["SOURCES_PORT"]}"
+  config.logger = TopologicalInventory::Sync.logger
+end
+
+require "topological_inventory-ingress_api-client"
+TopologicalInventoryIngressApiClient.configure do |config|
+  config.scheme = "http"
+  config.host   = "#{args[:ingress_api_host]}:#{args[:ingress_api_port]}"
+  config.logger = TopologicalInventory::Sync.logger
+end
+
+topological_inventory_sync = TopologicalInventory::Sync::InventoryUpload::ProcessorWorker.new(args[:queue_host], args[:queue_port])
 topological_inventory_sync.run

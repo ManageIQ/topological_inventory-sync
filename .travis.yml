@@ -1,11 +1,11 @@
----
+dist: xenial
 language: ruby
 sudo: false
 cache: bundler
 rvm:
-  - 2.5.3
+- 2.5.3
 addons:
-  postgresql: '9.5'
+  postgresql: '10'
 env:
   global:
   - DATABASE_URL="postgresql://postgres:@localhost:5432/topological_inventory_sync_test?encoding=utf8&pool=5&wait_timeout=5"

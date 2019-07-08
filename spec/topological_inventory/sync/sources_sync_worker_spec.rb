@@ -8,7 +8,7 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
     let(:sources_sync) do
       described_class.new("localhost", "9092")
     end
-    let(:message)         { ManageIQ::Messaging::ReceivedMessage.new(nil, event, payload, nil, nil) }
+    let(:message)         { ManageIQ::Messaging::ReceivedMessage.new(nil, event, payload, nil, nil, nil) }
     let(:external_tenant) { SecureRandom.uuid }
     let(:payload) do
       {"name" => "AWS", "source_type_id" => "1", "tenant" => external_tenant, "uid" => SecureRandom.uuid, "id" => "1"}

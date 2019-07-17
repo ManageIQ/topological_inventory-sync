@@ -31,9 +31,11 @@ module TopologicalInventory
 
           logger.info("#{log_header}: Processing payload [#{payload_id}]...")
 
-          inventory = TopologicalInventory::Sync::InventoryUpload::Parser.parse_inventory_payload(payload['url'])
+          Parser.parse_inventory_payload(payload['url']) do |inventory|
+            process_inventory(inventory, account)
+          end
 
-          process_inventory(inventory, account)
+          logger.info("#{log_header}: Processing payload [#{payload_id}]...Complete")
         end
 
         private
@@ -41,14 +43,119 @@ module TopologicalInventory
         # @param inventory [Hash]
         # @param account [String] account from x-rh-identity header
         def process_inventory(inventory, account)
+          send("process_#{payload_type(inventory)}_inventory", inventory, account)
+        end
+
+        def process_default_inventory(inventory, account)
+          inventory = TopologicalInventoryIngressApiClient::Inventory.new.build_from_hash(inventory.deep_symbolize_keys)
+          _source = process_source(account, inventory.source_type, inventory.name, inventory.source)
+          send_to_ingress_api(inventory)
+        end
+
+        def process_cfme_inventory(inventory, account)
+          cfme_ems_types.each do |ems_type|
+            inventory[ems_type].to_a.each do |payload|
+              payload = process_cfme_provider_inventory(ems_type, payload, account)
+              send_to_ingress_api(payload)
+            end
+          end
+        end
+
+        def process_cfme_provider_inventory(ems_type, payload, account)
+          source_type = ems_type_to_source_type(ems_type)
+          source_uid  = payload["guid"]
+          source_name = payload["name"]
+
+          _source = process_source(account, source_type, source_name, source_uid)
+
+          inventory = TopologicalInventoryIngressApiClient::Inventory.new(
+            :source                  => source_uid,
+            :source_type             => source_type,
+            :schema                  => TopologicalInventoryIngressApiClient::Schema.new(:name => "Default"),
+            :name                    => source_name,
+            :refresh_state_uuid      => SecureRandom.uuid,
+            :refresh_state_part_uuid => SecureRandom.uuid,
+            :collections             => [],
+          )
+
+          if payload["ems_clusters"].present?
+            clusters_collection = TopologicalInventoryIngressApiClient::InventoryCollection.new(:name => "clusters", :data => [])
+            payload["ems_clusters"].each do |cluster_data|
+              clusters_collection.data << TopologicalInventoryIngressApiClient::Cluster.new(
+                :name       => cluster_data["name"],
+                :source_ref => cluster_data["ems_ref"],
+                :uid_ems    => cluster_data["uid_ems"],
+              )
+            end
+            inventory.collections << clusters_collection
+          end
+
+          if payload["hosts"].present?
+            hosts_collection = TopologicalInventoryIngressApiClient::InventoryCollection.new(:name => "hosts", :data => [])
+            payload["hosts"].each do |host_data|
+              hosts_collection.data << TopologicalInventoryIngressApiClient::Host.new(
+                :name        => host_data["name"],
+                :hostname    => host_data["hostname"],
+                :ipaddress   => host_data["ipaddress"],
+                :power_state => host_data["power_state"],
+                :uid_ems     => host_data["uid_ems"],
+                :source_ref  => host_data["ems_ref"],
+                :cpus        => host_data["cpu_total_cores"],
+                :memory      => host_data.dig("hardware", "memory_mb") * 1048576,
+              )
+            end
+            inventory.collections << hosts_collection
+          end
+
+          if payload["vms"].present?
+            vms_collection = TopologicalInventoryIngressApiClient::InventoryCollection.new(:name => "vms", :data => [])
+            payload["vms"].each do |vm_data|
+              vms_collection.data << TopologicalInventoryIngressApiClient::Vm.new(
+                :name        => vm_data["name"],
+                :description => vm_data["description"],
+                :cpus        => vm_data["cpu_total_cores"],
+                :memory      => vm_data["ram_size_in_bytes"],
+                :source_ref  => vm_data["ems_ref"],
+                :uid_ems     => vm_data["uid_ems"],
+                :power_state => vm_data["power_state"],
+              )
+            end
+            inventory.collections << vms_collection
+          end
+
+          inventory
+        end
+
+        def ems_type_to_source_type(ems_type)
+          case ems_type
+          when "ManageIQ::Providers::OpenStack::CloudManager"
+            "openstack"
+          when "ManageIQ::Providers::Redhat::InfraManager"
+            "rhv"
+          when "ManageIQ::Providers::Vmware::InfraManager"
+            "vsphere"
+          else
+            raise "Invalid provider type #{ems_type}"
+          end
+        end
+
+        def cfme_ems_types
+          [
+            "ManageIQ::Providers::OpenStack::CloudManager",
+            "ManageIQ::Providers::Redhat::InfraManager",
+            "ManageIQ::Providers::Vmware::InfraManager"
+          ]
+        end
+
+        def process_source(account, source_type, source_name, source_uid)
           sources_api = sources_api_client(account)
+          source_type = find_source_type(source_type, sources_api)
 
-          source_type = find_source_type(inventory['source_type'], sources_api)
+          find_or_create_source(sources_api, source_type.id, source_name, source_uid)
+        end
 
-          find_or_create_source(sources_api, source_type.id, inventory['name'], inventory['source'])
-
-          new_inventory = convert_to_topological_inventory_schema(inventory)
-          send_to_ingress_api(new_inventory)
+        def payload_type(inventory)
+          inventory.dig("schema", "name").downcase
         end
 
         def find_source_type(source_type_name, sources_api)
@@ -90,7 +197,7 @@ module TopologicalInventory
         end
 
         def send_to_ingress_api(inventory)
-          logger.info("[START] Send to Ingress API with :refresh_state_uuid => '#{inventory['refresh_state_uuid']}'...")
+          logger.info("[START] Send to Ingress API with :refresh_state_uuid => '#{inventory.refresh_state_uuid}'...")
 
           sender = ingress_api_sender
 
@@ -102,19 +209,19 @@ module TopologicalInventory
             :inventory => inventory_for_sweep(inventory, total_parts)
           )
 
-          logger.info("[COMPLETED] Send to Ingress API with :refresh_state_uuid => '#{inventory['refresh_state_uuid']}'. Total parts: #{total_parts}")
+          logger.info("[COMPLETED] Send to Ingress API with :refresh_state_uuid => '#{inventory.refresh_state_uuid}'. Total parts: #{total_parts}")
           total_parts
         end
 
         def inventory_for_sweep(inventory, total_parts)
           TopologicalInventoryIngressApiClient::Inventory.new(
-            :name => inventory['name'],
-            :schema => TopologicalInventoryIngressApiClient::Schema.new(:name => inventory['schema']['name']),
-            :source => inventory['source'],
+            :name => inventory.name,
+            :schema => TopologicalInventoryIngressApiClient::Schema.new(:name => inventory.schema.name),
+            :source => inventory.source,
             :collections => [],
-            :refresh_state_uuid => inventory['refresh_state_uuid'],
+            :refresh_state_uuid => inventory.refresh_state_uuid,
             :total_parts => total_parts,
-            :sweep_scope => inventory['collections'].collect { |collection| collection['name'] }.compact
+            :sweep_scope => inventory.collections.collect { |collection| collection.name }.compact
           )
         end
 

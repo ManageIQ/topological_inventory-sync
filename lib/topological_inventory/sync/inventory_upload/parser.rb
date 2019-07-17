@@ -4,16 +4,12 @@ module TopologicalInventory
       class Parser
         class << self
           def parse_inventory_payload(url)
-            inventory = nil
-
             open_url(url) do |io|
               untargz(io) do |file|
                 require "json/stream"
-                inventory = JSON::Stream::Parser.parse(file)
+                yield JSON::Stream::Parser.parse(file)
               end
             end
-
-            inventory
           end
 
           private

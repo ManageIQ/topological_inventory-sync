@@ -19,6 +19,10 @@ module InventoryUploadHelper
     sample_inventory('OCP', 'openshift', source)
   end
 
+  def cfme_inventory
+    JSON.parse(File.read(File.join(__dir__, "cfme_inventory.json")))
+  end
+
   def sample_inventory(name, source_type, source, schema = 'Default')
     {
       'name'        => name,

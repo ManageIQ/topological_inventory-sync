@@ -1,0 +1,363 @@
+{
+  "cfme_version": "5.11",
+  "schema": {
+    "name": "Cfme"
+  },
+  "manifest": {
+    "cfme_version": "5.11",
+    "manifest": {
+      "core": {
+        "MiqDatabase": {
+          "id": null,
+          "guid": null,
+          "region_number": null,
+          "region_description": null
+        },
+        "Zone": {
+          "id": null,
+          "name": null
+        }
+      },
+      "ManageIQ::Providers::OpenStack::CloudManager": {
+        "id": null,
+        "name": null,
+        "type": null,
+        "guid": null,
+        "api_version": null,
+        "emstype_description": null,
+        "hostname": null,
+        "vms": {
+          "id": null,
+          "name": null,
+          "type": null,
+          "guid": null,
+          "uid_ems": null,
+          "archived": null,
+          "cpu_cores_per_socket": null,
+          "cpu_total_cores": null,
+          "disks_aligned": null,
+          "ems_ref": null,
+          "has_rdm_disk": null,
+          "host_id": null,
+          "linked_clone": null,
+          "orphaned": null,
+          "power_state": null,
+          "ram_size_in_bytes": null,
+          "retired": null,
+          "v_datastore_path": null,
+          "hardware": {
+            "id": null,
+            "disks": {
+              "id": null,
+              "device_name": null,
+              "device_type": null,
+              "disk_type": null,
+              "free_space": null,
+              "mode": null,
+              "size": null,
+              "size_on_disk": null,
+              "partitions": {
+                "id": null,
+                "name": null,
+                "controller": null,
+                "free_space": null,
+                "partition_type": null,
+                "size": null,
+                "start_address": null,
+                "used_space": null,
+                "virtual_disk_file": null,
+                "volume_group": null,
+                "volumes": {
+                  "id": null,
+                  "name": null,
+                  "filesystem": null,
+                  "free_space": null,
+                  "size": null,
+                  "typ": null,
+                  "used_space": null,
+                  "volume_group": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "ManageIQ::Providers::Redhat::InfraManager": {
+        "id": null,
+        "name": null,
+        "type": null,
+        "guid": null,
+        "api_version": null,
+        "emstype_description": null,
+        "hostname": null,
+        "vms": {
+          "id": null,
+          "name": null,
+          "type": null,
+          "guid": null,
+          "uid_ems": null,
+          "archived": null,
+          "cpu_cores_per_socket": null,
+          "cpu_total_cores": null,
+          "disks_aligned": null,
+          "ems_ref": null,
+          "has_rdm_disk": null,
+          "host_id": null,
+          "linked_clone": null,
+          "orphaned": null,
+          "power_state": null,
+          "ram_size_in_bytes": null,
+          "retired": null,
+          "v_datastore_path": null,
+          "hardware": {
+            "id": null,
+            "disks": {
+              "id": null,
+              "device_name": null,
+              "device_type": null,
+              "disk_type": null,
+              "free_space": null,
+              "mode": null,
+              "size": null,
+              "size_on_disk": null,
+              "partitions": {
+                "id": null,
+                "name": null,
+                "controller": null,
+                "free_space": null,
+                "partition_type": null,
+                "size": null,
+                "start_address": null,
+                "used_space": null,
+                "virtual_disk_file": null,
+                "volume_group": null,
+                "volumes": {
+                  "id": null,
+                  "name": null,
+                  "filesystem": null,
+                  "free_space": null,
+                  "size": null,
+                  "typ": null,
+                  "used_space": null,
+                  "volume_group": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "ManageIQ::Providers::Vmware::InfraManager": {
+        "id": null,
+        "name": null,
+        "type": null,
+        "guid": null,
+        "api_version": null,
+        "emstype_description": null,
+        "hostname": null,
+        "vms": {
+          "id": null,
+          "name": null,
+          "type": null,
+          "guid": null,
+          "uid_ems": null,
+          "archived": null,
+          "cpu_cores_per_socket": null,
+          "cpu_total_cores": null,
+          "disks_aligned": null,
+          "ems_ref": null,
+          "has_rdm_disk": null,
+          "host_id": null,
+          "linked_clone": null,
+          "orphaned": null,
+          "power_state": null,
+          "ram_size_in_bytes": null,
+          "retired": null,
+          "v_datastore_path": null,
+          "hardware": {
+            "id": null,
+            "disks": {
+              "id": null,
+              "device_name": null,
+              "device_type": null,
+              "disk_type": null,
+              "free_space": null,
+              "mode": null,
+              "size": null,
+              "size_on_disk": null,
+              "partitions": {
+                "id": null,
+                "name": null,
+                "controller": null,
+                "free_space": null,
+                "partition_type": null,
+                "size": null,
+                "start_address": null,
+                "used_space": null,
+                "virtual_disk_file": null,
+                "volume_group": null,
+                "volumes": {
+                  "id": null,
+                  "name": null,
+                  "filesystem": null,
+                  "free_space": null,
+                  "size": null,
+                  "typ": null,
+                  "used_space": null,
+                  "volume_group": null
+                }
+              }
+            }
+          }
+        },
+        "ems_extensions": {
+          "id": null,
+          "ems_ref": null,
+          "key": null,
+          "company": null,
+          "label": null,
+          "summary": null,
+          "version": null
+        },
+        "ems_licenses": {
+          "id": null,
+          "ems_ref": null,
+          "name": null,
+          "license_edition": null,
+          "total_licenses": null,
+          "used_licenses": null
+        }
+      }
+    }
+  },
+  "ManageIQ::Providers::Vmware::InfraManager": [
+    {
+      "id": 2,
+      "name": "dev-vc67",
+      "type": "ManageIQ::Providers::Vmware::InfraManager",
+      "guid": "be29c4f1-7885-4f12-aca1-08d4db19a1c0",
+      "api_version": "6.7.1",
+      "emstype_description": "VMware vCenter",
+      "hostname": "dev-vc67.cloudforms.lab.eng.rdu2.redhat.com",
+      "ems_clusters": [
+        {
+          "id": 1,
+          "uid_ems": "domain-c109",
+          "ems_ref": "domain-c109",
+          "ha_enabled": false,
+          "drs_enabled": true,
+          "effective_cpu": 122271,
+          "effective_memory": 387353411584
+        }
+      ],
+      "hosts": [
+        {
+          "id": 1,
+          "name": "dell-r430-13.cloudforms.lab.eng.rdu2.redhat.com",
+          "type": "ManageIQ::Providers::Vmware::InfraManager::HostEsx",
+          "hostname": "dell-r430-13.cloudforms.lab.eng.rdu2.redhat.com",
+          "ipaddress": "10.8.96.48",
+          "power_state": "on",
+          "guid": "f753bb4f-36ad-4c46-9cb9-d6b99655b2f9",
+          "uid_ems": "dell-r430-13.cloudforms.lab.eng.rdu2.redhat.com",
+          "mac_address": null,
+          "maintenance": false,
+          "vmm_vendor": "vmware",
+          "vmm_version": "6.7.0",
+          "vmm_product": "ESXi",
+          "vmm_buildnumber": "10764712",
+          "archived": false,
+          "cpu_cores_per_socket": 10,
+          "cpu_total_cores": 20,
+          "ems_cluster_id": 1
+        }
+      ],
+      "storages": [
+        {
+          "id": 1,
+          "name": "NFS Share",
+          "location": "08e49cea-d9221d10",
+          "store_type": "NFS",
+          "total_space": 1044536049664,
+          "free_space": 908617875456,
+          "uncommitted": 4650814222336,
+          "storage_domain_type": null,
+          "host_storages": [
+            {
+              "ems_ref": "datastore-118",
+              "host_id": 1
+            },
+            {
+              "ems_ref": "datastore-118",
+              "host_id": 2
+            },
+            {
+              "ems_ref": "datastore-118",
+              "host_id": 3
+            }
+          ]
+        }
+      ],
+      "vms": [
+        {
+          "id": 43,
+          "name": "ag_prov_test_2",
+          "type": "ManageIQ::Providers::Vmware::InfraManager::Vm",
+          "guid": "0bd0b9b9-455a-4f89-9458-ae52691413c4",
+          "uid_ems": "423d4e80-d96b-5a38-8cea-47bfa13af6f2",
+          "archived": false,
+          "cpu_cores_per_socket": 1,
+          "cpu_total_cores": 1,
+          "disks_aligned": "Unknown",
+          "ems_ref": "vm-336",
+          "has_rdm_disk": false,
+          "host_id": 2,
+          "linked_clone": true,
+          "orphaned": false,
+          "power_state": "on",
+          "ram_size_in_bytes": 2147483648,
+          "retired": null,
+          "v_datastore_path": "NFS Share/ag_prov_test_2/ag_prov_test_2.vmx",
+          "hardware": {
+            "id": 46,
+            "disks": [
+              {
+                "id": 83,
+                "device_name": "Hard disk 1",
+                "device_type": "disk",
+                "disk_type": "thin",
+                "free_space": null,
+                "mode": "persistent",
+                "size": 1073741824,
+                "size_on_disk": null,
+                "partitions": [
+
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "ems_extensions": [
+        {
+          "id": 1,
+          "ems_ref": "com.vmware.vim.sms",
+          "key": "com.vmware.vim.sms",
+          "company": "VMware Inc.",
+          "label": "VMware vCenter Storage Monitoring Service",
+          "summary": "Storage Monitoring and Reporting",
+          "version": "6.7.0"
+        }
+      ],
+      "ems_licenses": [
+        {
+          "id": 1,
+          "ems_ref": "00000-00000-00000-00000-00000",
+          "name": "Product Evaluation",
+          "license_edition": "eval",
+          "total_licenses": 0,
+          "used_licenses": null
+        }
+      ]
+    }
+  ]
+}

@@ -4,8 +4,9 @@ require "topological_inventory/sync/inventory_upload/validator_worker"
 RSpec.describe TopologicalInventory::Sync::InventoryUpload::ValidatorWorker do
   include InventoryUploadHelper
 
+  let(:validator) { described_class.new("localhost", "9092") }
+
   context "#perform" do
-    let(:validator) { described_class.new("localhost", "9092") }
     let(:message)         { ManageIQ::Messaging::ReceivedMessage.new(nil, nil, payload, nil, nil, nil) }
     let(:request_id) { "52df9f748eabcfeb" }
     let(:file_path) { "/tmp/uploads/insights-upload-perm-test/#{request_id}" }
@@ -40,6 +41,16 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::ValidatorWorker do
       it "publishes an invalid payload" do
         expect(validator).to receive(:publish_validation).with(hash_including("validation" => "failure"))
         validator.send(:perform, message)
+      end
+    end
+  end
+
+  context "#valid_payload? (private)" do
+    context "with cfme inventory payload" do
+      let(:inventory) { cfme_inventory }
+
+      it "is a valid payload" do
+        expect(validator.send(:valid_payload?, inventory)).to be_truthy
       end
     end
   end

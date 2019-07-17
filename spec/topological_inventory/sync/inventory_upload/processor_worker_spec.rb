@@ -101,13 +101,7 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::ProcessorWorker do
         end
 
         it "sends received inventory" do
-          expect(ingress_api_sender).to receive(:save).with(hash_including(:inventory => inventory))
-
-          processor.send(:perform, message)
-        end
-
-        it "sends total parts inventory" do
-          expect(TopologicalInventoryIngressApiClient::Inventory).to receive(:new).with(hash_including(:total_parts => total_parts, :sweep_scope => %w[some_collection]))
+          expect(ingress_api_sender).to receive(:save)
 
           processor.send(:perform, message)
         end

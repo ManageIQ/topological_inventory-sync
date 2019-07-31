@@ -1,5 +1,5 @@
 {
-  "cfme_version": "5.11",
+  "cfme_version": "5.11.0.14",
   "schema": {
     "name": "Cfme"
   },
@@ -38,7 +38,9 @@
           "disks_aligned": null,
           "ems_ref": null,
           "has_rdm_disk": null,
-          "host_id": null,
+          "host": {
+            "ems_ref": null
+          },
           "linked_clone": null,
           "orphaned": null,
           "power_state": null,
@@ -102,7 +104,9 @@
           "disks_aligned": null,
           "ems_ref": null,
           "has_rdm_disk": null,
-          "host_id": null,
+          "host": {
+            "ems_ref": null
+          },
           "linked_clone": null,
           "orphaned": null,
           "power_state": null,
@@ -144,6 +148,58 @@
               }
             }
           }
+        },
+        "ems_clusters": {
+          "id": null,
+          "name": null,
+          "uid_ems": null,
+          "ems_ref": null,
+          "ha_enabled": null,
+          "drs_enabled": null,
+          "effective_cpu": null,
+          "effective_memory": null
+        },
+        "hosts": {
+          "id": null,
+          "name": null,
+          "type": null,
+          "hostname": null,
+          "ipaddress": null,
+          "power_state": null,
+          "guid": null,
+          "uid_ems": null,
+          "ems_ref": null,
+          "mac_address": null,
+          "maintenance": null,
+          "vmm_vendor": null,
+          "vmm_version": null,
+          "vmm_product": null,
+          "vmm_buildnumber": null,
+          "archived": null,
+          "cpu_cores_per_socket": null,
+          "cpu_total_cores": null,
+          "ems_cluster": {
+            "ems_ref": null
+          },
+          "hardware": {
+            "memory_mb": null
+          }
+        },
+        "storages": {
+          "id": null,
+          "name": null,
+          "location": null,
+          "store_type": null,
+          "total_space": null,
+          "free_space": null,
+          "uncommitted": null,
+          "storage_domain_type": null,
+          "host_storages": {
+            "ems_ref": null,
+            "host": {
+              "ems_ref": null
+            }
+          }
         }
       },
       "ManageIQ::Providers::Vmware::InfraManager": {
@@ -166,7 +222,9 @@
           "disks_aligned": null,
           "ems_ref": null,
           "has_rdm_disk": null,
-          "host_id": null,
+          "host": {
+            "ems_ref": null
+          },
           "linked_clone": null,
           "orphaned": null,
           "power_state": null,
@@ -225,6 +283,58 @@
           "license_edition": null,
           "total_licenses": null,
           "used_licenses": null
+        },
+        "ems_clusters": {
+          "id": null,
+          "name": null,
+          "uid_ems": null,
+          "ems_ref": null,
+          "ha_enabled": null,
+          "drs_enabled": null,
+          "effective_cpu": null,
+          "effective_memory": null
+        },
+        "hosts": {
+          "id": null,
+          "name": null,
+          "type": null,
+          "hostname": null,
+          "ipaddress": null,
+          "power_state": null,
+          "guid": null,
+          "uid_ems": null,
+          "ems_ref": null,
+          "mac_address": null,
+          "maintenance": null,
+          "vmm_vendor": null,
+          "vmm_version": null,
+          "vmm_product": null,
+          "vmm_buildnumber": null,
+          "archived": null,
+          "cpu_cores_per_socket": null,
+          "cpu_total_cores": null,
+          "ems_cluster": {
+            "ems_ref": null
+          },
+          "hardware": {
+            "memory_mb": null
+          }
+        },
+        "storages": {
+          "id": null,
+          "name": null,
+          "location": null,
+          "store_type": null,
+          "total_space": null,
+          "free_space": null,
+          "uncommitted": null,
+          "storage_domain_type": null,
+          "host_storages": {
+            "ems_ref": null,
+            "host": {
+              "ems_ref": null
+            }
+          }
         }
       }
     }
@@ -234,100 +344,56 @@
       "id": 2,
       "name": "dev-vc67",
       "type": "ManageIQ::Providers::Vmware::InfraManager",
-      "guid": "be29c4f1-7885-4f12-aca1-08d4db19a1c0",
+      "guid": "0fc49008-9c54-443f-a67d-5bedaa802689",
       "api_version": "6.7.1",
       "emstype_description": "VMware vCenter",
       "hostname": "dev-vc67.cloudforms.lab.eng.rdu2.redhat.com",
-      "ems_clusters": [
-        {
-          "id": 1,
-          "uid_ems": "domain-c109",
-          "ems_ref": "domain-c109",
-          "ha_enabled": false,
-          "drs_enabled": true,
-          "effective_cpu": 122271,
-          "effective_memory": 387353411584
-        }
-      ],
-      "hosts": [
-        {
-          "id": 1,
-          "name": "dell-r430-13.cloudforms.lab.eng.rdu2.redhat.com",
-          "type": "ManageIQ::Providers::Vmware::InfraManager::HostEsx",
-          "hostname": "dell-r430-13.cloudforms.lab.eng.rdu2.redhat.com",
-          "ipaddress": "10.8.96.48",
-          "power_state": "on",
-          "guid": "f753bb4f-36ad-4c46-9cb9-d6b99655b2f9",
-          "uid_ems": "dell-r430-13.cloudforms.lab.eng.rdu2.redhat.com",
-          "mac_address": null,
-          "maintenance": false,
-          "vmm_vendor": "vmware",
-          "vmm_version": "6.7.0",
-          "vmm_product": "ESXi",
-          "vmm_buildnumber": "10764712",
-          "archived": false,
-          "cpu_cores_per_socket": 10,
-          "cpu_total_cores": 20,
-          "ems_cluster_id": 1
-        }
-      ],
-      "storages": [
-        {
-          "id": 1,
-          "name": "NFS Share",
-          "location": "08e49cea-d9221d10",
-          "store_type": "NFS",
-          "total_space": 1044536049664,
-          "free_space": 908617875456,
-          "uncommitted": 4650814222336,
-          "storage_domain_type": null,
-          "host_storages": [
-            {
-              "ems_ref": "datastore-118",
-              "host_id": 1
-            },
-            {
-              "ems_ref": "datastore-118",
-              "host_id": 2
-            },
-            {
-              "ems_ref": "datastore-118",
-              "host_id": 3
-            }
-          ]
-        }
-      ],
       "vms": [
         {
-          "id": 43,
-          "name": "ag_prov_test_2",
+          "id": 41,
+          "name": "billy_20190703_tagged",
           "type": "ManageIQ::Providers::Vmware::InfraManager::Vm",
-          "guid": "0bd0b9b9-455a-4f89-9458-ae52691413c4",
-          "uid_ems": "423d4e80-d96b-5a38-8cea-47bfa13af6f2",
+          "guid": "04b91376-8540-4d42-a34f-adac842b67c0",
+          "uid_ems": "423da9a6-58d2-aeb4-6e79-c0fc814f214a",
           "archived": false,
           "cpu_cores_per_socket": 1,
-          "cpu_total_cores": 1,
+          "cpu_total_cores": 4,
           "disks_aligned": "Unknown",
-          "ems_ref": "vm-336",
+          "ems_ref": "vm-339",
           "has_rdm_disk": false,
-          "host_id": 2,
+          "host": {
+            "ems_ref": "host-117"
+          },
           "linked_clone": true,
           "orphaned": false,
           "power_state": "on",
-          "ram_size_in_bytes": 2147483648,
+          "ram_size_in_bytes": 12884901888,
           "retired": null,
-          "v_datastore_path": "NFS Share/ag_prov_test_2/ag_prov_test_2.vmx",
+          "v_datastore_path": "NFS Share/billy_20190703_tagged/billy_20190703_tagged.vmx",
           "hardware": {
-            "id": 46,
+            "id": 44,
             "disks": [
               {
-                "id": 83,
+                "id": 78,
                 "device_name": "Hard disk 1",
                 "device_type": "disk",
                 "disk_type": "thin",
                 "free_space": null,
                 "mode": "persistent",
-                "size": 1073741824,
+                "size": 42949672960,
+                "size_on_disk": null,
+                "partitions": [
+
+                ]
+              },
+              {
+                "id": 79,
+                "device_name": "Hard disk 2",
+                "device_type": "disk",
+                "disk_type": "thin",
+                "free_space": null,
+                "mode": "persistent",
+                "size": 107374182400,
                 "size_on_disk": null,
                 "partitions": [
 
@@ -356,6 +422,82 @@
           "license_edition": "eval",
           "total_licenses": 0,
           "used_licenses": null
+        },
+        {
+          "id": 2,
+          "ems_ref": "0041L-4CKEL-18U9N-021HP-809KJ",
+          "name": "VMware vCenter Server 6 Standard",
+          "license_edition": "vc.standard.instance",
+          "total_licenses": 6,
+          "used_licenses": 1
+        },
+        {
+          "id": 3,
+          "ems_ref": "U021J-DY10Q-P8C8H-0Q280-05DQJ",
+          "name": "VMware vSphere 6 Enterprise Plus",
+          "license_edition": "esx.enterprisePlus.cpuPackage",
+          "total_licenses": 60,
+          "used_licenses": 6
+        }
+      ],
+      "ems_clusters": [
+        {
+          "id": 1,
+          "name": "dev-vc67-cluster",
+          "uid_ems": "domain-c109",
+          "ems_ref": "domain-c109",
+          "ha_enabled": false,
+          "drs_enabled": true,
+          "effective_cpu": 122271,
+          "effective_memory": 794191462400
+        }
+      ],
+      "hosts": [
+        {
+          "id": 3,
+          "name": "dell-r430-21.cloudforms.lab.eng.rdu2.redhat.com",
+          "type": "ManageIQ::Providers::Vmware::InfraManager::HostEsx",
+          "hostname": "dell-r430-21.cloudforms.lab.eng.rdu2.redhat.com",
+          "ipaddress": "10.8.96.56",
+          "power_state": "on",
+          "guid": "0223babf-58e5-40a7-9711-fb044a93ddc6",
+          "uid_ems": "dell-r430-21.cloudforms.lab.eng.rdu2.redhat.com",
+          "ems_ref": "host-171",
+          "mac_address": null,
+          "maintenance": false,
+          "vmm_vendor": "vmware",
+          "vmm_version": "6.7.0",
+          "vmm_product": "ESXi",
+          "vmm_buildnumber": "8169922",
+          "archived": false,
+          "cpu_cores_per_socket": 10,
+          "cpu_total_cores": 20,
+          "ems_cluster": {
+            "ems_ref": "domain-c109"
+          },
+          "hardware": {
+            "memory_mb": 261922
+          }
+        }
+      ],
+      "storages": [
+        {
+          "id": 1,
+          "name": "NFS Share",
+          "location": "08e49cea-d9221d10",
+          "store_type": "NFS",
+          "total_space": 1044536049664,
+          "free_space": 904929406976,
+          "uncommitted": 5231092838400,
+          "storage_domain_type": null,
+          "host_storages": [
+            {
+              "ems_ref": "datastore-118",
+              "host": {
+                "ems_ref": "host-117"
+              }
+            }
+          ]
         }
       ]
     }

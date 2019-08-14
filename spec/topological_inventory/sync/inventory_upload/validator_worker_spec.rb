@@ -18,7 +18,7 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::ValidatorWorker do
     end
 
     before do
-      expect(TopologicalInventory::Sync::InventoryUpload::Parser)
+      expect(TopologicalInventory::Sync::InventoryUpload::Payload)
         .to receive(:open_url).and_yield(targz(inventory))
     end
 

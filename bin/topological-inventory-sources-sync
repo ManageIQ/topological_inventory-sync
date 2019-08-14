@@ -30,6 +30,8 @@ require "sources-api-client"
 SourcesApiClient.configure do |config|
   config.scheme = ENV["SOURCES_SCHEME"] || "http"
   config.host   = "#{ENV["SOURCES_HOST"]}:#{ENV["SOURCES_PORT"]}"
+
+  require "topological_inventory/core/logging"
   config.logger = TopologicalInventory::Core.logger
 end
 

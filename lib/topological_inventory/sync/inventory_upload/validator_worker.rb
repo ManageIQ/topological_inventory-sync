@@ -1,6 +1,6 @@
 require "json"
 require "topological_inventory/sync/worker"
-require "topological_inventory/sync/inventory_upload/parser"
+require "topological_inventory/sync/inventory_upload/payload"
 
 module TopologicalInventory
   class Sync
@@ -29,7 +29,7 @@ module TopologicalInventory
           logger.info("#{log_header}: Validating payload [#{payload_id}]...")
 
           valid = "success"
-          Parser.parse_inventory_payload(payload["url"]) do |inventory|
+          Payload.unpack(payload["url"]) do |inventory|
             # Return invalid if any of the payloads are invalid
             valid = "failure" unless valid_payload?(inventory)
           end

@@ -7,6 +7,10 @@ module TopologicalInventory
     class SourcesSyncWorker < Worker
       include Logging
 
+      def internal_tenant
+        "system_orchestrator"
+      end
+
       def worker_name
         "Topological Inventory Sync Worker"
       end
@@ -24,7 +28,12 @@ module TopologicalInventory
         tenant_by_source_uid = {}
 
         tenants.each do |tenant|
-          sources_api_client(tenant).list_sources.data.each do |source|
+          supported_applications_by_source_id = supported_applications(tenant).group_by(&:source_id)
+
+          sources         = sources_api_client(tenant).list_sources.data
+          enabled_sources = sources.select { |source| supported_applications_by_source_id[source.id].present? }
+
+          enabled_sources.each do |source|
             sources_by_uid[source.uid]       = source
             tenant_by_source_uid[source.uid] = tenant
           end
@@ -62,12 +71,16 @@ module TopologicalInventory
         tenant = headers_to_account_number(message.headers)
 
         case jobtype
-        when "Source.create"
+        when "Application.create"
+          source = sources_api_client(tenant).show_source(payload["source_id"].to_s)
+
           Source.create!(
-            :id     => payload["id"],
-            :uid    => payload["uid"],
+            :id     => source.id,
+            :uid    => source.uid,
             :tenant => tenants_by_external_tenant(tenant),
           )
+        when "Application.destroy"
+          Source.find_by(:id => payload["source_id"]).destroy
         when "Source.destroy"
           Source.find_by(:uid => payload["uid"]).destroy
         end
@@ -78,10 +91,23 @@ module TopologicalInventory
         @tenants_by_external_tenant[external_tenant] ||= Tenant.find_or_create_by(:external_tenant => external_tenant)
       end
 
-
       def tenants
         response = RestClient.get(internal_tenants_url, identity_headers("topological_inventory-sources_sync"))
         JSON.parse(response).map { |tenant| tenant["external_tenant"] }
+      end
+
+      def supported_applications(tenant)
+        sources_api_client(tenant).list_applications.data
+          .select { |app| supported_application_type_ids.include?(app.application_type_id) }
+      end
+
+      def supported_application_type_ids
+        @supported_application_type_ids ||= begin
+          supported_application_names = ["/insights/platform/catalog", "/insights/platform/topological-inventory"]
+
+          sources_api_client(internal_tenant).list_application_types.data
+            .select { |at| supported_application_names.include?(at.name) }.map(&:id)
+        end
       end
 
       def internal_tenants_url

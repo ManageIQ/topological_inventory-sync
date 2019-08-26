@@ -55,15 +55,25 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
 
     context "source destroy event" do
       let(:event) { "Source.destroy" }
-      let(:tenant) { Tenant.find_or_create_by(:external_tenant => external_tenant) }
-      let!(:source) { Source.create!(:tenant => tenant, :uid => payload["uid"]) }
       let(:payload) do
         {"name" => "AWS", "source_type_id" => "1", "tenant" => SecureRandom.uuid, "uid" => SecureRandom.uuid, "id" => "1"}
       end
 
-      it "deletes the source" do
-        sources_sync.send(:perform, message)
-        expect(Source.count).to eq(0)
+      context "when the source doesn't exist" do
+        it "deletes the source" do
+          sources_sync.send(:perform, message)
+          expect(Source.count).to eq(0)
+        end
+      end
+
+      context "when the source exists" do
+        let(:tenant) { Tenant.find_or_create_by(:external_tenant => external_tenant) }
+        let!(:source) { Source.create!(:tenant => tenant, :uid => payload["uid"]) }
+
+        it "deletes the source" do
+          sources_sync.send(:perform, message)
+          expect(Source.count).to eq(0)
+        end
       end
     end
   end

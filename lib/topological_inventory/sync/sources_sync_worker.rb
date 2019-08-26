@@ -80,9 +80,11 @@ module TopologicalInventory
             :tenant => tenants_by_external_tenant(tenant),
           )
         when "Application.destroy"
-          Source.find_by(:id => payload["source_id"]).destroy
+          source = Source.find_by(:id => payload["source_id"])
+          source&.destroy
         when "Source.destroy"
-          Source.find_by(:uid => payload["uid"]).destroy
+          source = Source.find_by(:uid => payload["uid"])
+          source&.destroy
         end
       end
 

@@ -17,6 +17,8 @@ module TopologicalInventory
                 source = find_or_create_source(source_type, source_name, source_uid)
                 logger.info("Source ID [#{source.id}] Name [#{source.name}] Type [#{source_type}]")
 
+                find_or_create_application(source_type, source)
+
                 inventory = Parser::Cfme.parse(source_type, source_uid, source_name, provider_payload)
                 send_to_ingress_api(inventory)
 
@@ -30,7 +32,7 @@ module TopologicalInventory
           def ems_type_to_source_type
             @ems_type_to_source_type ||= {
               "ManageIQ::Providers::OpenStack::CloudManager" => "openstack",
-              "ManageIQ::Providers::Redhat::InfraManager"    => "rhv",
+              "ManageIQ::Providers::Redhat::InfraManager"    => "ovirt",
               "ManageIQ::Providers::Vmware::InfraManager"    => "vsphere"
             }.freeze
           end

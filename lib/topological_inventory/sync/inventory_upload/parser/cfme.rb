@@ -49,7 +49,7 @@ module TopologicalInventory
           end
 
           def parse_host(host_data)
-            memory_mb = host_data.dig("hardware", "memory_mb")
+            memory_mb = host_data.dig("hardware", "memory_mb") || 0
             cluster_ref = host_data.dig("ems_cluster", "ems_ref")
             cluster     = ingress_api_lazy_ref("clusters", cluster_ref) unless cluster_ref.nil?
 

@@ -9,7 +9,9 @@ module TopologicalInventory
             inventory = TopologicalInventoryIngressApiClient::Inventory.new
             inventory.build_from_hash(payload.deep_symbolize_keys)
 
-            find_or_create_source(inventory.source_type, inventory.name, inventory.source)
+            source = find_or_create_source(inventory.source_type, inventory.name, inventory.source)
+            find_or_create_application(inventory.source_type, source)
+
             send_to_ingress_api(inventory)
           end
         end

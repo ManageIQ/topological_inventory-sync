@@ -6,10 +6,12 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::Payload::Cfme do
 
   context "#process" do
     let(:source) { SourcesApiClient::Source.new }
+    let(:application) { SourcesApiClient::Application.new }
     it "parses cfme inventory and sends to ingress-api" do
       payload = described_class.new(cfme_inventory, "12345")
 
       expect(payload).to receive(:find_or_create_source).and_return(source)
+      expect(payload).to receive(:find_or_create_application).and_return(application)
       expect(payload).to receive(:send_to_ingress_api)
 
       payload.process

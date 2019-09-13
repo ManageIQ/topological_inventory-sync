@@ -3,7 +3,7 @@ require "sources-api-client"
 
 RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
   let(:sources_sync)       { described_class.new("localhost", "9092") }
-  let(:source)             { {"id" => "1", "uid" => SecureRandom.uuid} }
+  let(:source_attrs)       { {"id" => "1", "uid" => SecureRandom.uuid} }
   let(:sources_api_client) { double("SourcesApiClient::Default") }
 
   before do
@@ -29,7 +29,7 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
         :links => {}
       )
     )
-    allow(sources_api_client).to receive(:show_source).and_return(SourcesApiClient::Source.new(source))
+    allow(sources_api_client).to receive(:show_source).and_return(SourcesApiClient::Source.new(source_attrs))
     allow(described_class).to    receive(:sources_api_client).and_return(sources_api_client)
   end
 
@@ -61,7 +61,7 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
 
     context "with a source deleted" do
       let(:tenant)       { Tenant.create(:external_tenant => SecureRandom.uuid) }
-      let(:source)       { Source.create!(:uid => SecureRandom.uuid, :tenant => tenant) }
+      let!(:source)      { Source.create!(:uid => SecureRandom.uuid, :tenant => tenant) }
       let(:sources)      { [] }
       let(:applications) { [] }
 
@@ -87,7 +87,7 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
 
         it "doesn't create the source" do
           sources_sync.send(:perform, message)
-          expect(Source.find_by(:uid => source["uid"])).to be_nil
+          expect(Source.find_by(:uid => source_attrs["uid"])).to be_nil
         end
       end
 

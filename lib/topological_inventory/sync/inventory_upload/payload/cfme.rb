@@ -31,7 +31,7 @@ module TopologicalInventory
 
           def ems_type_to_source_type
             @ems_type_to_source_type ||= {
-              "ManageIQ::Providers::OpenStack::CloudManager" => "openstack",
+              "ManageIQ::Providers::Openstack::CloudManager" => "openstack",
               "ManageIQ::Providers::Redhat::InfraManager"    => "ovirt",
               "ManageIQ::Providers::Vmware::InfraManager"    => "vsphere"
             }.freeze

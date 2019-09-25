@@ -29,8 +29,9 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
         :links => {}
       )
     )
+
     allow(sources_api_client).to receive(:show_source).and_return(SourcesApiClient::Source.new(source_attrs))
-    allow(described_class).to    receive(:sources_api_client).and_return(sources_api_client)
+    allow(TopologicalInventory::Sync).to receive(:sources_api_client).and_return(sources_api_client)
   end
 
   context "#initial_sync" do

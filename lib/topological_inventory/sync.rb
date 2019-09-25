@@ -1,3 +1,4 @@
+require "topological_inventory/sync/api_client"
 require "topological_inventory/sync/logging"
 require "topological_inventory/sync/sources_sync_worker"
 require "topological_inventory/sync/worker"

@@ -19,10 +19,12 @@ module TopologicalInventory
 
                 find_or_create_application(source_type, source)
 
-                inventory = Parser::Cfme.parse(source_type, source_uid, source_name, provider_payload)
-                send_to_ingress_api(inventory)
+                if source_exists_in_topology_inventory?(source_uid)
+                  inventory = Parser::Cfme.parse(source_type, source_uid, source_name, provider_payload)
+                  send_to_ingress_api(inventory)
 
-                logger.info("Processing CFME Provider [#{source_uid}] [#{source_name}]...Complete")
+                  logger.info("Processing CFME Provider [#{source_uid}] [#{source_name}]...Complete")
+                end
               end
             end
           end

@@ -478,6 +478,32 @@
           "hardware": {
             "memory_mb": 261922
           }
+        },
+        {
+          "id": 4,
+          "name": "dell-r430-22.cloudforms.lab.eng.rdu2.redhat.com",
+          "type": "ManageIQ::Providers::Vmware::InfraManager::HostEsx",
+          "hostname": "dell-r430-22.cloudforms.lab.eng.rdu2.redhat.com",
+          "ipaddress": "10.8.96.57",
+          "power_state": "on",
+          "guid": "c3b48610-c0f7-0137-c6f0-0026188ee07f",
+          "uid_ems": "dell-r430-22.cloudforms.lab.eng.rdu2.redhat.com",
+          "ems_ref": "host-172",
+          "mac_address": null,
+          "maintenance": false,
+          "vmm_vendor": "vmware",
+          "vmm_version": "6.7.0",
+          "vmm_product": "ESXi",
+          "vmm_buildnumber": "8169922",
+          "archived": false,
+          "cpu_cores_per_socket": 10,
+          "cpu_total_cores": 20,
+          "ems_cluster": {
+            "ems_ref": "domain-c109"
+          },
+          "hardware": {
+            "memory_mb": 261922
+          }
         }
       ],
       "storages": [
@@ -494,7 +520,13 @@
             {
               "ems_ref": "datastore-118",
               "host": {
-                "ems_ref": "host-117"
+                "ems_ref": "host-171"
+              }
+            },
+            {
+              "ems_ref": null,
+              "host": {
+                "ems_ref": "host-172"
               }
             }
           ]

@@ -40,5 +40,11 @@ TopologicalInventoryIngressApiClient.configure do |config|
   config.logger = TopologicalInventory::Sync.logger
 end
 
+require 'topological_inventory-api-client'
+TopologicalInventoryApiClient.configure do |config|
+  config.scheme = "http"
+  config.host = "#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_HOST"]}:#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_PORT"]}"
+end
+
 topological_inventory_sync = TopologicalInventory::Sync::InventoryUpload::ProcessorWorker.new(args[:queue_host], args[:queue_port])
 topological_inventory_sync.run

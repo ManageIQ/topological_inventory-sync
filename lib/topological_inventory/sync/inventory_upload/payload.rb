@@ -1,12 +1,14 @@
 require "sources-api-client"
 require "topological_inventory/sync/inventory_upload/payload/cfme"
 require "topological_inventory/sync/inventory_upload/payload/default"
+require "topological_inventory/sync/api_client"
 
 module TopologicalInventory
   class Sync
     module InventoryUpload
       class Payload
         include Logging
+        include ApiClient
 
         class << self
           def load(message)
@@ -178,20 +180,26 @@ module TopologicalInventory
           )
         end
 
-        def sources_api_client(tenant = nil)
-          api_client = SourcesApiClient::ApiClient.new
+        TIMEOUT_COUNT = 30.seconds.freeze
 
-          if tenant
-            api_client.default_headers.merge!(
-              {
-                "x-rh-identity" => Base64.strict_encode64(
-                  JSON.dump({"identity" => {"account_number" => tenant}})
-                )
-              }
-            )
+        def source_exists_in_topology_inventory?(source_uid)
+          count = 0
+          source_exist = false
+          api_client = topological_api_client(account)
+
+          loop do
+            source_exist = find_source(api_client, source_uid)
+            break if source_exist
+
+            break if (count += 1) >= self.class::TIMEOUT_COUNT
+
+            sleep 1
           end
 
-          SourcesApiClient::DefaultApi.new(api_client)
+          unless source_exist
+            logger.error("Timeout exceeded: Unable to find Source #{source_uid} in Topological Inventory")
+          end
+          source_exist
         end
       end
     end

@@ -28,15 +28,25 @@ module TopologicalInventory
 
           logger.info("#{log_header}: Validating payload [#{payload_id}]...")
 
-          valid = "success"
-          Payload.unpack(payload["url"]) do |inventory|
-            # Return invalid if any of the payloads are invalid
-            valid = "failure" unless valid_payload?(inventory)
+          valid = "failure"
+          reason = nil
+
+          begin
+            Payload.unpack(payload["url"]) do |inventory|
+              # Return invalid if any of the payloads are invalid
+              if valid_payload?(inventory)
+                valid = "success"
+              else
+                reason = "Invalid payload"
+              end
+            end
+          rescue Zlib::GzipFile::Error, JSON::Stream::ParserError => err
+            reason = "Invalid file - #{err}"
           end
 
           payload["validation"] = valid
 
-          logger.info("#{log_header}: Validating payload [#{payload_id}]...Complete - #{payload["validation"]}")
+          logger.info("#{log_header}: Validating payload [#{payload_id}]...Complete - #{payload["validation"]}#{reason ? ", #{reason}" : ""}")
 
           publish_validation(payload)
         end

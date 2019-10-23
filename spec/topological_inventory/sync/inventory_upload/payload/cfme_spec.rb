@@ -15,10 +15,12 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::Payload::Cfme do
       payload.send(:cfme_ems_types).each do |ems_type|
         cfme_inventory[ems_type].to_a.each do |provider_payload|
           expect(payload).to receive(:source_exists_in_topology_inventory?).with(provider_payload['guid']).and_return(true)
+          source_type = payload.send(:ems_type_to_source_type)[ems_type]
+          source_params = {:type_name => source_type, :name => provider_payload['name'], :uid => provider_payload['guid'], :imported => :cfme}
+          expect(payload).to receive(:find_or_create_source).with(source_params).and_return(source)
         end
       end
 
-      expect(payload).to receive(:find_or_create_source).and_return(source)
       expect(payload).to receive(:find_or_create_application).and_return(application)
       expect(payload).to receive(:send_to_ingress_api)
 

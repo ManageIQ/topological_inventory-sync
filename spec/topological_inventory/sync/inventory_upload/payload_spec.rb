@@ -51,7 +51,7 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::Payload do
       let(:source_types) { [] }
 
       it "raises exception" do
-        expect { payload.send(:find_or_create_source, "abcd", "name", "uid") }
+        expect { payload.send(:find_or_create_source, :type_name => "abcd", :name => "name", :uid => "uid") }
           .to raise_exception(RuntimeError, "Failed to find source type [abcd]")
       end
     end
@@ -61,13 +61,13 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::Payload do
 
       it "creates the new source" do
         expect(sources_api_client).to receive(:create_source_with_http_info).and_return([source, 201])
-        expect(payload.send(:find_or_create_source, source_type.name, source.name, source.uid)).to eq(source)
+        expect(payload.send(:find_or_create_source, :type_name => source_type.name, :name => source.name, :uid => source.uid)).to eq(source)
       end
 
       it "raises an error if sources-api-client fails" do
         expect(sources_api_client).to receive(:create_source_with_http_info)
           .and_raise(SourcesApiClient::ApiError.new(:code => 400, :response_headers => {}, :response_body => "Bad Request"))
-        expect { payload.send(:find_or_create_source, source_type.name, source.name, source.uid) }
+        expect { payload.send(:find_or_create_source, :type_name => source_type.name, :name => source.name, :uid => source.uid) }
           .to raise_exception("Failed to create source [#{source.name}] [#{source.uid}] [openshift]: Bad Request")
       end
     end
@@ -75,7 +75,7 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::Payload do
     context "with an existing source" do
       it "returns the existing source" do
         expect(sources_api_client).not_to receive(:create_source_with_http_info)
-        expect(payload.send(:find_or_create_source, source_type.name, source.name, source.uid)).to eq(source)
+        expect(payload.send(:find_or_create_source, :type_name => source_type.name, :name => source.name, :uid => source.uid)).to eq(source)
       end
     end
   end

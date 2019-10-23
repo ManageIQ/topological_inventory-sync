@@ -66,12 +66,14 @@ module TopologicalInventory
 
         attr_reader :account, :payload
 
-        def find_or_create_source(source_type_name, source_name, source_uid)
+        def find_or_create_source(source_parameters)
           sources_api = sources_api_client(account)
+          source_type_name = source_parameters[:type_name]
           source_type = find_source_type(sources_api, source_type_name)
           raise "Failed to find source type [#{source_type_name}]" if source_type.nil?
 
-          find_source(sources_api, source_uid) || create_source(sources_api, source_uid, source_name, source_type)
+          source_parameters[:source_type_id] = source_type.id
+          find_source(sources_api, source_parameters[:uid]) || create_source(sources_api, source_parameters)
         end
 
         def find_or_create_application(source_type_name, source)
@@ -109,14 +111,18 @@ module TopologicalInventory
           raise "Failed to find source [#{source_uid}]: #{e.response_body}"
         end
 
-        def create_source(sources_api, source_uid, source_name, source_type)
+        def create_source(sources_api, source_parameters)
           logger.info("Creating Source")
-          new_source = SourcesApiClient::Source.new(:uid => source_uid, :name => source_name, :source_type_id => source_type.id)
+          source_uid = source_parameters[:uid]
+          source_name = source_parameters[:name]
+          source_type_name = source_parameters.delete(:type_name)
+
+          new_source = SourcesApiClient::Source.new(source_parameters)
           source, = sources_api.create_source_with_http_info(new_source)
-          logger.info("Created Source: Name [#{source_name}] UID [#{source_uid}] Type [#{source_type.name}]")
+          logger.info("Created Source: Name [#{source_name}] UID [#{source_uid}] Type [#{source_type_name}]")
           source
         rescue SourcesApiClient::ApiError => e
-          raise "Failed to create source [#{source_name}] [#{source_uid}] [#{source_type.name}]: #{e.response_body}"
+          raise "Failed to create source [#{source_name}] [#{source_uid}] [#{source_type_name}]: #{e.response_body}"
         end
 
         # Sources sync worker writes new source to topological db only if source is assigned to topological-inventory application

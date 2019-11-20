@@ -180,7 +180,7 @@ module TopologicalInventory
         end
 
         def ingress_api_sender
-          TopologicalInventoryIngressApiClient::SaveInventory::Saver.new(
+          TopologicalInventory::Providers::Common::SaveInventory::Saver.new(
             :client => ingress_api_client,
             :logger => logger
           )

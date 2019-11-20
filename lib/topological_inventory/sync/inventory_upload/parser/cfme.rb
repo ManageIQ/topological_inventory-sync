@@ -56,7 +56,6 @@ module TopologicalInventory
             TopologicalInventoryIngressApiClient::Host.new(
               :name        => host_data["name"],
               :hostname    => host_data["hostname"],
-              :ipaddress   => host_data["ipaddress"],
               :power_state => host_data["power_state"],
               :uid_ems     => host_data["uid_ems"],
               :source_ref  => host_data["ems_ref"],

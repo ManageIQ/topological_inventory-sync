@@ -127,6 +127,15 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
             expect(Tenant.count).to eq(1)
             expect(Tenant.first.external_tenant).to eq(external_tenant)
           end
+
+          it "doesn't try to create a source if it exists" do
+            Source.create(source_attrs.merge(:tenant => tenant))
+            expect(Source.count).to eq(1)
+
+            sources_sync.send(:perform, message)
+
+            expect(Source.count).to eq(1)
+          end
         end
       end
     end
@@ -134,6 +143,11 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
     context "source destroy event" do
       let(:tenant) { Tenant.find_or_create_by(:external_tenant => external_tenant) }
       let!(:source) { Source.create!(:tenant => tenant, :uid => SecureRandom.uuid) }
+      let(:applications_collection) { SourcesApiClient::ApplicationsCollection.new(:data => [], :links => {}) }
+
+      before do
+        allow(sources_api_client).to receive(:list_source_applications).and_return(applications_collection)
+      end
 
       context "when the source was deleted" do
         let(:event) { "Source.destroy" }
@@ -146,14 +160,54 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
         end
       end
 
-      context "when the source was disabled for topology" do
+      context "when application was deleted" do
         let(:event) { "Application.destroy" }
         let(:payload) do
-          {"source_id" => source.id, "tenant" => tenant.external_tenant, "application_type_id": "1"}
+          {"source_id" => source.id, "tenant" => tenant.external_tenant, "application_type_id" => "1"}
         end
 
-        it "deletes the source" do
-          expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(-1)
+        context "when no application is remaining" do
+          it "deletes the source" do
+            expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(-1)
+          end
+        end
+
+        context "when unsupported application is remaining" do
+          let(:applications_collection) do
+            SourcesApiClient::ApplicationsCollection.new(
+              :data  => [
+                SourcesApiClient::Application.new(
+                  :application_type_id => '2',
+                  :id => '1',
+                  :source_id => source.id.to_s,
+                  :tenant => tenant.external_tenant
+                )
+              ],
+              :links => {})
+          end
+
+          it "deletes the source" do
+            expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(-1)
+          end
+        end
+
+        context "when supported application is remaining" do
+          let(:applications_collection) do
+            SourcesApiClient::ApplicationsCollection.new(
+              :data  => [
+                SourcesApiClient::Application.new(
+                  :application_type_id => '1',
+                  :id => '1',
+                  :source_id => source.id.to_s,
+                  :tenant => tenant.external_tenant
+                )
+              ],
+              :links => {})
+          end
+
+          it "doesn't delete the source" do
+            expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(0)
+          end
         end
       end
     end

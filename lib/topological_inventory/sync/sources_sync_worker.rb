@@ -83,10 +83,16 @@ module TopologicalInventory
 
           if supported_application_type_ids.include?(application_type_id.to_s)
             source_uid = source_uids_by_id[source_id] || sources_api_client(tenant).show_source(source_id.to_s)&.uid
-            Source.create!(:id => source_id, :uid => source_uid, :tenant => tenants_by_external_tenant(tenant))
+            Source.find_or_create_by!(:id => source_id, :uid => source_uid, :tenant => tenants_by_external_tenant(tenant))
           end
         when "Application.destroy"
-          Source.find_by(:id => payload["source_id"])&.destroy
+          source_id = payload["source_id"]
+          source_apps = sources_api_client(tenant).list_source_applications(source_id.to_s).data
+          source_application_type_ids = source_apps.collect(&:application_type_id).uniq
+          # Delete Source if there is no remaining supported application
+          if (source_application_type_ids & supported_application_type_ids).blank?
+            Source.find_by(:id => source_id)&.destroy
+          end
         when "Source.destroy"
           source_uids_by_id.delete(payload["id"])
           Source.find_by(:id => payload["id"])&.destroy

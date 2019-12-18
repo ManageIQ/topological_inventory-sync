@@ -6,7 +6,7 @@ require File.join(Bundler::Plugin.index.load_paths("bundler-inject")[0], "bundle
 gem "cloudwatchlogger", "~> 0.2"
 gem "http",             "~> 4.1.0", :require => false
 gem "json-stream",      "~> 0.2.0", :require => false
-gem "manageiq-loggers", "~> 0.3.0"
+gem "manageiq-loggers", "~> 0.4.0"
 gem "manageiq-messaging"
 gem "optimist"
 

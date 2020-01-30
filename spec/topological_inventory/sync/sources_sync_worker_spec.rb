@@ -37,7 +37,7 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
   context "#initial_sync" do
     before do
       identity = Base64.strict_encode64(
-        JSON.dump({"identity" => {"account_number" => "topological_inventory-sources_sync"}}))
+        JSON.dump({"identity" => {"account_number" => "topological_inventory-sources_sync", "user" => {"is_org_admin" => true}}}))
       allow(RestClient).to receive(:get)
         .with("http://cloud.redhat.com:443/internal/v1.0/tenants", {"x-rh-identity"=> identity})
         .and_return("[{\"external_tenant\":\"12345\"}]")

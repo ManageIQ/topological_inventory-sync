@@ -9,7 +9,14 @@ module TopologicalInventory
       {
         'x-rh-identity' =>
             Base64.strict_encode64(
-              JSON.dump('identity' => { 'account_number' => tenant })
+              JSON.dump(
+                'identity' => {
+                  'account_number' => tenant,
+                  'user'           => {
+                    'is_org_admin' => true
+                  }
+                }
+              )
             )
       }
     end

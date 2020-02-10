@@ -10,7 +10,7 @@ gem "manageiq-loggers", "~> 0.4.0", ">= 0.4.2"
 gem "manageiq-messaging"
 gem "optimist"
 
-gem "sources-api-client",         :git => "https://github.com/ManageIQ/sources-api-client-ruby", :branch => "master"
+gem "sources-api-client", "~> 1.0"
 gem "topological_inventory-ingress_api-client", :git => "https://github.com/ManageIQ/topological_inventory-ingress_api-client-ruby", :branch => "master"
 gem "topological_inventory-core", :git => "https://github.com/ManageIQ/topological_inventory-core", :branch => "master"
 gem "topological_inventory-api-client", "~> 2.0"

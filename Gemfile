@@ -12,7 +12,7 @@ gem "optimist"
 
 gem "sources-api-client", "~> 1.0"
 gem "topological_inventory-ingress_api-client", "~> 1.0"
-gem "topological_inventory-core", :git => "https://github.com/ManageIQ/topological_inventory-core", :branch => "master"
+gem "topological_inventory-core", :git => "https://github.com/RedHatInsights/topological_inventory-core", :branch => "master"
 gem "topological_inventory-api-client", "~> 2.0"
 gem "topological_inventory-providers-common", "~> 0.1"
 

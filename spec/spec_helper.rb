@@ -9,6 +9,7 @@ raise "Specs must be run in test environment" if ENV["RAILS_ENV"] != "test"
 require "active_record/railtie"
 require "action_controller/railtie"
 require 'rspec/rails'
+require "timecop"
 
 require "topological_inventory/core/ar_helper"
 TopologicalInventory::Core::ArHelper.database_yaml_path = Pathname.new(__dir__).join("../config/database.yml")

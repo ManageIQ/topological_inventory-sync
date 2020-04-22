@@ -12,7 +12,7 @@ RSpec.describe TopologicalInventory::Sync::InventoryUpload::ValidatorWorker do
     let(:file_path) { "/tmp/uploads/insights-upload-perm-test/#{request_id}" }
     let(:payload) do
       "{\"account\":\"12345\",\"rh_account\":\"12345\",\"principal\":\"54321\",\"request_id\":\"52df9f748eabcfeb\",\
-      \"payload_id\":\"52df9f748eabcfeb\",\"size\":458,\"service\":\"topological-inventory\",\"category\":\"something\",\
+      \"request_id\":\"52df9f748eabcfeb\",\"size\":458,\"service\":\"topological-inventory\",\"category\":\"something\",\
       \"b64_identity\":\"eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMTIzNDUiLCAiaW50ZXJuYWwiOiB7Im9yZ19pZCI6ICI1NDMyMSJ9fX0=\",\
       \"url\":\"/tmp/upload/schema.tar.gz\"}"
     end

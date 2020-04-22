@@ -27,11 +27,11 @@ module TopologicalInventory
           return unless data["service"] == "topological-inventory"
 
           log_header = "account [#{data["account"]}] request_id [#{data["request_id"]}]"
-          logger.info("#{log_header}: Processing payload [#{data["payload_id"]}]...")
+          logger.info("#{log_header}: Processing payload [#{data["request_id"]}]...")
 
           Payload.load(data, &:process)
 
-          logger.info("#{log_header}: Processing payload [#{data["payload_id"]}]...Complete")
+          logger.info("#{log_header}: Processing payload [#{data["request_id"]}]...Complete")
         end
       end
     end

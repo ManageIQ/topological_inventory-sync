@@ -23,10 +23,10 @@ module TopologicalInventory
         def perform(message)
           payload = JSON.parse(message.payload)
 
-          account, request_id, payload_id = payload.values_at("account", "request_id", "payload_id")
+          account, request_id = payload.values_at("account", "request_id")
           log_header = "account [#{account}] request_id [#{request_id}]"
 
-          logger.info("#{log_header}: Validating payload [#{payload_id}]...")
+          logger.info("#{log_header}: Validating payload [#{request_id}]...")
 
           valid = "failure"
           reason = nil
@@ -46,7 +46,7 @@ module TopologicalInventory
 
           payload["validation"] = valid
 
-          logger.info("#{log_header}: Validating payload [#{payload_id}]...Complete - #{payload["validation"]}#{reason ? ", #{reason}" : ""}")
+          logger.info("#{log_header}: Validating payload [#{request_id}]...Complete - #{payload["validation"]}#{reason ? ", #{reason}" : ""}")
 
           publish_validation(payload)
         end

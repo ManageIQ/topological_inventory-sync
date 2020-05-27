@@ -20,7 +20,7 @@ gem "topological_inventory-api-client", "~> 2.0"
 gem "topological_inventory-providers-common", "~> 0.1"
 
 group :development, :test do
-  gem "rake"
+  gem "rake", ">= 12.3.3"
   gem "rspec-rails"
   gem "simplecov"
   gem "timecop"

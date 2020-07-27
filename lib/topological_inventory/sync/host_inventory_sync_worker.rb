@@ -5,6 +5,8 @@ require "topological_inventory/sync/worker"
 require "topological_inventory/sync/application_metrics"
 require "topological_inventory-ingress_api-client"
 require "topological_inventory/providers/common/save_inventory/saver"
+require "topological_inventory/sync/configuration"
+require "topological_inventory/sync/host_inventory_response_worker"
 
 module TopologicalInventory
   class Sync
@@ -22,6 +24,8 @@ module TopologicalInventory
         self.topological_inventory_api_params_hash = topological_inventory_api_params_hash
         self.host_inventory_api                    = host_inventory_api
         self.metrics                               = TopologicalInventory::Sync::ApplicationMetrics.new(metrics_port, "topological_inventory_host_inventory_sync_")
+        self.response_config                       = TopologicalInventory::Sync::Configuration.new(:queue_host => queue_host, :queue_port => queue_port)
+        self.response_worker                       = TopologicalInventory::Sync::ResponseWorker.new(response_config, logger)
       end
 
       def worker_name
@@ -37,8 +41,10 @@ module TopologicalInventory
       end
 
       def run
+        response_worker.start
         super
       ensure
+        response_worker.stop
         metrics&.stop_server
       end
 
@@ -79,7 +85,7 @@ module TopologicalInventory
 
       private
 
-      attr_accessor :log, :topological_inventory_api_params_hash, :host_inventory_api, :metrics
+      attr_accessor :log, :topological_inventory_api_params_hash, :host_inventory_api, :metrics, :response_config, :response_worker
 
       def perform(message)
         payload        = message.payload
@@ -92,8 +98,7 @@ module TopologicalInventory
           return
         end
 
-        vms = extract_vms(payload)
-        return if payload.empty? # No vms were found
+        return if (vms = extract_vms(payload)).empty?
 
         logger.info("#{vms.size} VMs found for account_number: #{account_number} and source: #{source}.")
 
@@ -104,9 +109,8 @@ module TopologicalInventory
 
         logger.info("Syncing #{topological_inventory_vms.size} Topological Inventory VMs with Host Inventory")
 
-        stale_timestamp = Time.now.utc + STALE_TIMESTAMP_OFFSET
+        stale_timestamp = (Time.now.utc + STALE_TIMESTAMP_OFFSET).to_datetime
 
-        updated_topological_inventory_vms = []
         topological_inventory_vms.each do |host|
           # Skip processing if we've already created this host in Host Based
           next if !host["host_inventory_uuid"].nil? && !host["host_inventory_uuid"].empty?
@@ -121,57 +125,27 @@ module TopologicalInventory
           }
 
           # TODO(lsmola) use the possibility to create batch of VMs in Host Inventory
-          created_host = JSON.parse(create_host_inventory_hosts(x_rh_identity, data).body)
-
-          updated_topological_inventory_vms << TopologicalInventoryIngressApiClient::Vm.new(
-            :source_ref          => host["source_ref"],
-            :host_inventory_uuid => created_host["data"].first["host"]["id"],
-          )
+          create_host_inventory_hosts(data, source)
         end
-
-        logger.info(
-          "Synced #{topological_inventory_vms.size} Topological Inventory VMs with Host Inventory. "\
-        "Created: #{updated_topological_inventory_vms.size}, "\
-        "Skipped: #{topological_inventory_vms.size - updated_topological_inventory_vms.size}"
-        )
-
-        return if updated_topological_inventory_vms.empty?
-
-        logger.info("Updating Topological Inventory with #{updated_topological_inventory_vms.size} VMs.")
-        save_vms_to_topological_inventory(updated_topological_inventory_vms, source)
-        logger.info("Updated Topological Inventory with #{updated_topological_inventory_vms.size} VMs.")
       rescue => e
         logger.error("#{e.message} -  #{e.backtrace.join("\n")}")
       end
 
-      def save_vms_to_topological_inventory(topological_inventory_vms, source)
-        # TODO(lsmola) if VM will have subcollections, this will need to send just partial data, otherwise all subcollections
-        # would get deleted. Alternative is having another endpoint than :vms, for doing update only operation. Partial data
-        # are not supported without timestamp for update (at least for now), since that is just being added to skeletal
-        # precreate.
-        TopologicalInventory::Providers::Common::SaveInventory::Saver.new(:client => ingress_api_client, :logger => logger).save(
-          :inventory => TopologicalInventoryIngressApiClient::Inventory.new(
-            :schema                     => TopologicalInventoryIngressApiClient::Schema.new(:name => "Default"),
-            :source                     => source,
-            :collections                => [
-              TopologicalInventoryIngressApiClient::InventoryCollection.new(:name => :vms, :data => topological_inventory_vms)
-            ],
-            :refresh_state_part_sent_at => Time.now.utc
-          )
+      def create_host_inventory_hosts(data, source)
+        client = ManageIQ::Messaging::Client.open(:protocol => :Kafka, :host => messaging_host, :port => messaging_port)
+        client.publish_message(
+          :service => 'platform.inventory.host-ingress',
+          :message => 'update_host_inventory',
+          :payload => {
+            "operation" => "add_host",
+            "data"      => data
+          }.to_json
         )
-      end
-
-      def ingress_api_client
-        TopologicalInventoryIngressApiClient::DefaultApi.new
-      end
-
-      def create_host_inventory_hosts(x_rh_identity, data)
-        RestClient::Request.execute(
-          :method  => :post,
-          :payload => [data].to_json,
-          :url     => File.join(host_inventory_api, "hosts"),
-          :headers => {"Content-Type" => "application/json", "x-rh-identity" => x_rh_identity}
-        )
+        response_worker.register_message(data[:external_id], source)
+      rescue => err
+        logger.error("Exception in `create_host_inventory_hosts`: #{err}\n#{err.backtrace.join("\n")}")
+      ensure
+        client&.close
       end
 
       def get_host_inventory_hosts(x_rh_identity)

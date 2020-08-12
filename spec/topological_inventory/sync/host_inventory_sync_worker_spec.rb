@@ -120,45 +120,21 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
       expect(host_inventory_sync_service).to(
         receive(:create_host_inventory_hosts)
           .with(*make_host_arg(mac_addresses_1, "vm1"))
-          .and_return(
-            mock_body({"data" => [{"host" => {"id" => "host_uuid_1"}}]})
-          )
       )
 
       expect(host_inventory_sync_service).to(
         receive(:create_host_inventory_hosts)
           .with(*make_host_arg(mac_addresses_2, "vm2"))
-          .and_return(
-            mock_body({"data" => [{"host" => {"id" => "host_uuid_2"}}]})
-          )
       )
 
       expect(host_inventory_sync_service).to(
         receive(:create_host_inventory_hosts)
           .with(*make_host_arg(mac_addresses_3, "vm3"))
-          .and_return(
-            mock_body({"data" => [{"host" => {"id" => "host_uuid_3"}}]})
-          )
       )
 
       expect(host_inventory_sync_service).to(
         receive(:create_host_inventory_hosts)
           .with(*make_host_arg([], "vm4"))
-          .and_return(
-            mock_body({"data" => [{"host" => {"id" => "host_uuid_4"}}]})
-          )
-      )
-
-      expect(host_inventory_sync_service).to(
-        receive(:save_vms_to_topological_inventory).with(
-          [
-            TopologicalInventoryIngressApiClient::Vm.new(:source_ref => "vm1", :host_inventory_uuid => "host_uuid_1"),
-            TopologicalInventoryIngressApiClient::Vm.new(:source_ref => "vm2", :host_inventory_uuid => "host_uuid_2"),
-            TopologicalInventoryIngressApiClient::Vm.new(:source_ref => "vm3", :host_inventory_uuid => "host_uuid_3"),
-            TopologicalInventoryIngressApiClient::Vm.new(:source_ref => "vm4", :host_inventory_uuid => "host_uuid_4"),
-          ],
-          source
-        )
       )
 
       host_inventory_sync_service.send(:perform, message)
@@ -203,15 +179,15 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
 
   def make_host_arg(mac_addresses, source_ref)
     [
-      "eyJpZGVudGl0eSI6eyJhY2NvdW50X251bWJlciI6ImV4dGVybmFsX3RlbmFu\ndF91dWlkIn19\n",
       {
         :mac_addresses   => mac_addresses,
         :account         => account_number,
         :external_id     => source_ref,
         :display_name    => nil,
         :reporter        => "topological-inventory",
-        :stale_timestamp => Time.now.utc + 86400
-      }
+        :stale_timestamp => (Time.now.utc + 86_400).to_datetime
+      },
+      source
     ]
   end
 

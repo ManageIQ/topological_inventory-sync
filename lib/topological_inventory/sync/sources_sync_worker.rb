@@ -1,5 +1,6 @@
 require "rest-client"
 require "topological_inventory/sync/worker"
+require "topological_inventory/sync/iterator"
 require "more_core_extensions/core_ext/module/cache_with_timeout"
 require "uri"
 
@@ -27,17 +28,39 @@ module TopologicalInventory
         "topological-inventory-sync-sources"
       end
 
+      def self.application_types(tenant)
+        block = lambda { |limit, offset| sources_api_client(tenant).list_application_types(:limit => limit, :offset => offset) }
+        TopologicalInventory::Sync::Iterator.new(block)
+      end
+
+      def applications(tenant)
+        block = lambda { |limit, offset| sources_api_client(tenant).list_applications(:limit => limit, :offset => offset) }
+        TopologicalInventory::Sync::Iterator.new(block)
+      end
+
+      def sources(tenant)
+        block = lambda { |limit, offset| sources_api_client(tenant).list_sources(:limit => limit, :offset => offset) }
+        TopologicalInventory::Sync::Iterator.new(block)
+      end
+
+      def source_applications(tenant, source_id)
+        block = lambda { |resource_id, limit, offset| sources_api_client(tenant).list_source_applications(resource_id, :limit => limit, :offset => offset) }
+        TopologicalInventory::Sync::Iterator.new(block, :resource_id => source_id.to_s)
+      end
+
       def initial_sync
         sources_by_uid       = {}
         tenant_by_source_uid = {}
 
         tenants.each do |tenant|
-          applications            = sources_api_client(tenant).list_applications.data
-          supported_applications  = applications.select { |app| supported_application_type_ids.include?(app.application_type_id) }
+          supported_applications = []
+          applications(tenant).each do |app|
+            supported_applications << app if supported_application_type_ids.include?(app.application_type_id)
+          end
 
           supported_applications_by_source_id = supported_applications.group_by(&:source_id)
 
-          sources_api_client(tenant).list_sources.data.each do |source|
+          sources(tenant).each do |source|
             next unless supported_applications_by_source_id[source.id].present?
             sources_by_uid[source.uid]       = source
             tenant_by_source_uid[source.uid] = tenant
@@ -87,7 +110,8 @@ module TopologicalInventory
           end
         when "Application.destroy"
           source_id = payload["source_id"]
-          source_apps = sources_api_client(tenant).list_source_applications(source_id.to_s).data
+          source_apps = []
+          source_applications(tenant, source_id.to_s).each { |source_app| source_apps << source_app }
           source_application_type_ids = source_apps.collect(&:application_type_id).uniq
           # Delete Source if there is no remaining supported application
           if (source_application_type_ids & supported_application_type_ids).blank?
@@ -104,13 +128,15 @@ module TopologicalInventory
         @tenants_by_external_tenant[external_tenant] ||= Tenant.find_or_create_by(:external_tenant => external_tenant)
       end
 
+      # TODO: Pagination not available in Sources Internal API!
       def tenants
         response = RestClient.get(internal_tenants_url, identity_headers("topological_inventory-sources_sync"))
         JSON.parse(response).map { |tenant| tenant["external_tenant"] }
       end
 
       cache_with_timeout(:supported_application_type_ids) do
-        application_types = sources_api_client("system_orchestrator").list_application_types.data
+        application_types = []
+        application_types("system_orchestrator").each { |app_type| application_types << app_type }
         application_types.select { |application_type| needs_topology?(application_type) }.map(&:id)
       end
 

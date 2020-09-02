@@ -26,7 +26,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
             :id                     => "3"
           )
         ],
-        :links => {}
+        :links => {},
+        :meta  => SourcesApiClient::CollectionMetadata.new(:count => 3)
       )
     )
 
@@ -43,11 +44,15 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
         .and_return("[{\"external_tenant\":\"12345\"}]")
 
       allow(sources_api_client).to receive(:list_applications).and_return(
-        SourcesApiClient::ApplicationsCollection.new(:data => applications, :links => {})
+        SourcesApiClient::ApplicationsCollection.new(:data  => applications,
+                                                     :links => {},
+                                                     :meta  => SourcesApiClient::CollectionMetadata.new(:count => applications.size))
       )
 
       allow(sources_api_client).to receive(:list_sources).and_return(
-        SourcesApiClient::ApplicationsCollection.new(:data => sources, :links => {})
+        SourcesApiClient::ApplicationsCollection.new(:data  => sources,
+                                                     :links => {},
+                                                     :meta  => SourcesApiClient::CollectionMetadata.new(:count => sources.size))
       )
     end
 
@@ -143,7 +148,9 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
     context "source destroy event" do
       let(:tenant) { Tenant.find_or_create_by(:external_tenant => external_tenant) }
       let!(:source) { Source.create!(:tenant => tenant, :uid => SecureRandom.uuid) }
-      let(:applications_collection) { SourcesApiClient::ApplicationsCollection.new(:data => [], :links => {}) }
+      let(:applications_collection) { SourcesApiClient::ApplicationsCollection.new(:data  => [],
+                                                                                   :links => {},
+                                                                                   :meta  => SourcesApiClient::CollectionMetadata.new(:count => 0)) }
 
       before do
         allow(sources_api_client).to receive(:list_source_applications).and_return(applications_collection)
@@ -179,11 +186,11 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
                 SourcesApiClient::Application.new(
                   :application_type_id => '2',
                   :id => '1',
-                  :source_id => source.id.to_s,
-                  :tenant => tenant.external_tenant
+                  :source_id => source.id.to_s
                 )
               ],
-              :links => {})
+              :links => {},
+              :meta  => SourcesApiClient::CollectionMetadata.new(:count => 1))
           end
 
           it "deletes the source" do
@@ -198,11 +205,11 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
                 SourcesApiClient::Application.new(
                   :application_type_id => '1',
                   :id => '1',
-                  :source_id => source.id.to_s,
-                  :tenant => tenant.external_tenant
+                  :source_id => source.id.to_s
                 )
               ],
-              :links => {})
+              :links => {},
+              :meta  => SourcesApiClient::CollectionMetadata.new(:count => 1))
           end
 
           it "doesn't delete the source" do

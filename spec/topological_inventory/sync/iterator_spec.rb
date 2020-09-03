@@ -7,9 +7,9 @@ RSpec.describe TopologicalInventory::Sync::Iterator do
     data = []
     app_types_count.times do |i|
       data << SourcesApiClient::ApplicationType.new(
-        :name => "insights/platform/app-#{i}",
+        :name                   => "insights/platform/app-#{i}",
         :dependent_applications => [],
-        :id => i.to_s
+        :id                     => i.to_s
       )
     end
     data
@@ -26,7 +26,7 @@ RSpec.describe TopologicalInventory::Sync::Iterator do
         )
         expect(sources_api_client).to receive(:list_application_types).and_return(response)
 
-        iterator = described_class.new(lambda {|_, _| sources_api_client.list_application_types})
+        iterator = described_class.new(->(_, _) { sources_api_client.list_application_types })
 
         cnt = 0
         iterator.each do |data|
@@ -39,7 +39,7 @@ RSpec.describe TopologicalInventory::Sync::Iterator do
       (1..5).each do |limit|
         it "calls the block with pagination (limit: #{limit})" do
           offset = 0
-          while offset < app_types_count do
+          while offset < app_types_count
             low, high = offset, [offset + limit - 1, app_types_count].min
             response = SourcesApiClient::ApplicationTypesCollection.new(
               :data => app_types[low..high],
@@ -50,7 +50,7 @@ RSpec.describe TopologicalInventory::Sync::Iterator do
                                             .and_return(response))
             offset += limit
           end
-          block = lambda { |l, o| sources_api_client.list_application_types(:limit => l, :offset => o)}
+          block = ->(l, o) { sources_api_client.list_application_types(:limit => l, :offset => o) }
           iterator = described_class.new(block, :limit => limit)
 
           cnt = 0
@@ -67,14 +67,14 @@ RSpec.describe TopologicalInventory::Sync::Iterator do
         response = {:data => app_types}
         expect(sources_api_client).to receive(:unexpected_request).and_return(response)
 
-        iterator = described_class.new(lambda {|_, _| sources_api_client.unexpected_request})
-        msg      = "Provided block expects Sources API Client response"
+        iterator = described_class.new(->(_, _) { sources_api_client.unexpected_request })
+        msg      = "Sources API Client response expected"
         expect { iterator.each { |_| expect("It shouldn't be here").to be_falsey } }.to raise_exception(msg)
       end
     end
 
     context "with resource" do
-      let(:application) { SourcesApiClient::Application.new(:id => '1', :application_type_id => '1', :source_id => '1')}
+      let(:application) { SourcesApiClient::Application.new(:id => '1', :application_type_id => '1', :source_id => '1') }
 
       it "calls the block with 3 parameters" do
         source_id = '10'
@@ -86,7 +86,7 @@ RSpec.describe TopologicalInventory::Sync::Iterator do
                                         .with(source_id, :limit => 1, :offset => 0)
                                         .and_return(response))
 
-        block = lambda { |src_id, l, o| sources_api_client.list_source_applications(src_id, :limit => l, :offset => o)}
+        block = ->(src_id, l, o) { sources_api_client.list_source_applications(src_id, :limit => l, :offset => o) }
         iterator = described_class.new(block, :limit => 1, :resource_id => source_id)
 
         cnt = 0

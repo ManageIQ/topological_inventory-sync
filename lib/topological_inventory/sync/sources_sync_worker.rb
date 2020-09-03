@@ -29,22 +29,22 @@ module TopologicalInventory
       end
 
       def self.application_types(tenant)
-        block = lambda { |limit, offset| sources_api_client(tenant).list_application_types(:limit => limit, :offset => offset) }
+        block = ->(limit, offset) { sources_api_client(tenant).list_application_types(:limit => limit, :offset => offset) }
         TopologicalInventory::Sync::Iterator.new(block)
       end
 
       def applications(tenant)
-        block = lambda { |limit, offset| sources_api_client(tenant).list_applications(:limit => limit, :offset => offset) }
+        block = ->(limit, offset) { sources_api_client(tenant).list_applications(:limit => limit, :offset => offset) }
         TopologicalInventory::Sync::Iterator.new(block)
       end
 
       def sources(tenant)
-        block = lambda { |limit, offset| sources_api_client(tenant).list_sources(:limit => limit, :offset => offset) }
+        block = ->(limit, offset) { sources_api_client(tenant).list_sources(:limit => limit, :offset => offset) }
         TopologicalInventory::Sync::Iterator.new(block)
       end
 
       def source_applications(tenant, source_id)
-        block = lambda { |resource_id, limit, offset| sources_api_client(tenant).list_source_applications(resource_id, :limit => limit, :offset => offset) }
+        block = ->(resource_id, limit, offset) { sources_api_client(tenant).list_source_applications(resource_id, :limit => limit, :offset => offset) }
         TopologicalInventory::Sync::Iterator.new(block, :resource_id => source_id.to_s)
       end
 
@@ -61,7 +61,8 @@ module TopologicalInventory
           supported_applications_by_source_id = supported_applications.group_by(&:source_id)
 
           sources(tenant).each do |source|
-            next unless supported_applications_by_source_id[source.id].present?
+            next if supported_applications_by_source_id[source.id].blank?
+
             sources_by_uid[source.uid]       = source
             tenant_by_source_uid[source.uid] = tenant
           end
@@ -88,6 +89,8 @@ module TopologicalInventory
             :uid    => source_uid
           )
         end
+
+        logger.info("Initial sync completed...")
       end
 
       def perform(message)

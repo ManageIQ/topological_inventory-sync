@@ -11,17 +11,17 @@ module TopologicalInventory
 
       def each
         offset = 0
+        finished = false
 
-        loop do
+        until finished
           collection = resource_id.nil? ? block.call(limit, offset) : block.call(resource_id, limit, offset)
-          %i[data meta].each do |method|
-            raise "Provided block expects Sources API Client response" unless collection.respond_to?(method)
-          end
+          %i[data meta].each { |method| raise "Sources API Client response expected" unless collection.respond_to?(method) }
           break if collection.data.blank?
 
           collection.data.each { |record| yield record }
           offset += limit
-          break if offset >= collection.meta.count.to_i
+
+          finished = true if offset >= collection.meta.count.to_i
         end
       end
     end

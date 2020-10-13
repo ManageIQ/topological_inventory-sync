@@ -1,6 +1,7 @@
 require "rest-client"
 require "topological_inventory/sync/worker"
 require "topological_inventory/sync/iterator"
+require "topological_inventory/sync/metrics/sources_sync"
 require "more_core_extensions/core_ext/module/cache_with_timeout"
 require "uri"
 
@@ -11,7 +12,7 @@ module TopologicalInventory
 
       attr_reader :source_uids_by_id
 
-      def initialize(messaging_host, messaging_port)
+      def initialize(messaging_host, messaging_port, metrics)
         @source_uids_by_id = {}
         super
       end
@@ -75,7 +76,10 @@ module TopologicalInventory
         sources_to_create = current_source_uids - previous_source_uids
 
         logger.info("Deleting sources [#{sources_to_delete.join("\n")}]") if sources_to_delete.any?
-        Source.where(:uid => sources_to_delete).destroy_all
+        sources_arel = Source.where(:uid => sources_to_delete)
+        cnt = sources_arel.count
+        sources_arel.destroy_all
+        metrics&.source_destroyed(cnt) unless cnt.zero?
 
         sources_to_create.each do |source_uid|
           logger.info("Creating source [#{source_uid}]")
@@ -88,6 +92,7 @@ module TopologicalInventory
             :tenant => tenant,
             :uid    => source_uid
           )
+          metrics&.source_created(1)
         end
 
         logger.info("Initial sync completed...")
@@ -109,7 +114,7 @@ module TopologicalInventory
 
           if supported_application_type_ids.include?(application_type_id.to_s)
             source_uid = source_uids_by_id[source_id] || sources_api_client(tenant).show_source(source_id.to_s)&.uid
-            Source.find_or_create_by!(:id => source_id, :uid => source_uid, :tenant => tenants_by_external_tenant(tenant))
+            create_source(source_id, source_uid, tenant)
           end
         when "Application.destroy"
           source_id = payload["source_id"]
@@ -118,11 +123,29 @@ module TopologicalInventory
           source_application_type_ids = source_apps.collect(&:application_type_id).uniq
           # Delete Source if there is no remaining supported application
           if (source_application_type_ids & supported_application_type_ids).blank?
-            Source.find_by(:id => source_id)&.destroy
+            destroy_source(source_id)
           end
         when "Source.destroy"
           source_uids_by_id.delete(payload["id"])
-          Source.find_by(:id => payload["id"])&.destroy
+          destroy_source(payload["id"])
+        end
+      end
+
+      def create_source(id, uid, tenant)
+        source = Source.find_by(:id => id, :uid => uid)
+        if source.blank?
+          Source.create!(:id => id, :uid => uid, :tenant => tenants_by_external_tenant(tenant))
+          metrics&.source_created(1)
+        end
+      rescue => e
+        logger.error("Failed to create Source (id: #{id}, uid: #{uid}). Error: #{e.message} | #{e.cause}")
+      end
+
+      def destroy_source(id)
+        source = Source.find_by(:id => id)
+        if source.present?
+          source.destroy
+          metrics&.source_destroyed(1)
         end
       end
 

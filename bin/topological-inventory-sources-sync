@@ -15,6 +15,8 @@ def parse_args
         :default => ENV["QUEUE_HOST"] || "localhost"
     opt :queue_port, "Port of the Platform's kafka queue", :type => :int,
         :default => (ENV["QUEUE_PORT"] || 9092).to_i, :required => false
+    opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
+        :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
   end
 
   opts
@@ -35,5 +37,11 @@ SourcesApiClient.configure do |config|
   config.logger = TopologicalInventory::Core.logger
 end
 
-topological_inventory_sync = TopologicalInventory::Sync::SourcesSyncWorker.new(args[:queue_host], args[:queue_port])
+metrics = TopologicalInventory::Sync::Metrics::SourcesSync.new(args[:metrics_port])
+
+topological_inventory_sync = TopologicalInventory::Sync::SourcesSyncWorker.new(args[:queue_host], args[:queue_port], metrics)
 topological_inventory_sync.run
+
+Signal.trap("TERM") do
+  metrics&.stop_server
+end

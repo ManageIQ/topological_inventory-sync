@@ -2,7 +2,8 @@ require "topological_inventory/sync"
 require "sources-api-client"
 
 RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
-  let(:sources_sync)       { described_class.new("localhost", "9092") }
+  let(:metrics)            { double("metrics") }
+  let(:sources_sync)       { described_class.new("localhost", "9092", metrics) }
   let(:source_attrs)       { {"id" => "1", "uid" => SecureRandom.uuid} }
   let(:sources_api_client) { double("SourcesApiClient::Default") }
 
@@ -62,6 +63,7 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
       let(:applications) { [SourcesApiClient::Application.new(:source_id => "1", :application_type_id => "3")] }
 
       it "creates a new source" do
+        expect(metrics).to receive(:source_created).with(1)
         expect { sources_sync.initial_sync }.to change { Source.count }.by(1)
       end
     end
@@ -73,6 +75,7 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
       let(:applications) { [] }
 
       it "deletes the source" do
+        expect(metrics).to receive(:source_destroyed).with(1)
         expect { sources_sync.initial_sync }.to change { Source.count }.by(-1)
       end
     end
@@ -93,6 +96,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
         end
 
         it "doesn't create the source" do
+          expect(metrics).not_to receive(:source_created)
+
           sources_sync.send(:perform, message)
           expect(Source.find_by(:uid => source_attrs["uid"])).to be_nil
         end
@@ -105,6 +110,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
 
         context "with no existing tenants" do
           it "creates a source and a new tenant" do
+            expect(metrics).to receive(:source_created).with(1)
+
             sources_sync.send(:perform, message)
 
             expect(Source.count).to eq(1)
@@ -122,6 +129,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
           let(:tenant) { Tenant.find_or_create_by(:external_tenant => external_tenant) }
 
           it "creates a source on an existing tenant" do
+            expect(metrics).to receive(:source_created).with(1)
+
             sources_sync.send(:perform, message)
 
             expect(Source.count).to eq(1)
@@ -135,6 +144,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
           end
 
           it "doesn't try to create a source if it exists" do
+            expect(metrics).not_to receive(:source_created)
+
             Source.create(source_attrs.merge(:tenant => tenant))
             expect(Source.count).to eq(1)
 
@@ -166,6 +177,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
         end
 
         it "deletes the source" do
+          expect(metrics).to receive(:source_destroyed).with(1)
+
           expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(-1)
         end
       end
@@ -178,6 +191,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
 
         context "when no application is remaining" do
           it "deletes the source" do
+            expect(metrics).to receive(:source_destroyed).with(1)
+
             expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(-1)
           end
         end
@@ -198,6 +213,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
           end
 
           it "deletes the source" do
+            expect(metrics).to receive(:source_destroyed).with(1)
+
             expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(-1)
           end
         end
@@ -218,6 +235,8 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
           end
 
           it "doesn't delete the source" do
+            expect(metrics).not_to receive(:source_destroyed)
+
             expect { sources_sync.send(:perform, message) }.to change { Source.count }.by(0)
           end
         end

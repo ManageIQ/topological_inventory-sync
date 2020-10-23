@@ -12,10 +12,11 @@ module TopologicalInventory
 
       TOPOLOGY_APP_NAME = "/insights/platform/topological-inventory".freeze
 
-      def initialize(messaging_host, messaging_port)
+      def initialize(messaging_host, messaging_port, metrics = nil)
         self.messaging_client = nil
         self.messaging_host   = messaging_host
         self.messaging_port   = messaging_port
+        self.metrics          = metrics
       end
 
       def run
@@ -28,8 +29,8 @@ module TopologicalInventory
           begin
             perform(message)
           rescue => err
-            logger.error(err)
-            logger.error(err.backtrace.join("\n"))
+            metrics&.record_error
+            logger.error("#{err.message}\n#{err.backtrace.join("\n")}")
           end
         end
       ensure
@@ -38,7 +39,7 @@ module TopologicalInventory
 
       private
 
-      attr_accessor :messaging_client, :messaging_host, :messaging_port, :queue_name
+      attr_accessor :messaging_client, :messaging_host, :messaging_port, :metrics, :queue_name
 
       def initial_sync
         # Override this in your subclass if there is any sync needed to be done

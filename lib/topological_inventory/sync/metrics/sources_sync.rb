@@ -4,8 +4,6 @@ module TopologicalInventory
   class Sync
     class Metrics
       class SourcesSync < TopologicalInventory::Sync::Metrics
-        private
-
         def source_created(cnt = 1)
           @sources_created_counter&.observe(cnt)
         end

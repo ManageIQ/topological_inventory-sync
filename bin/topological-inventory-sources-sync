@@ -17,6 +17,7 @@ def parse_args
         :default => (ENV["QUEUE_PORT"] || 9092).to_i, :required => false
     opt :metrics_port, "Port to expose the metrics endpoint on, 0 to disable metrics",
         :type => :integer, :default => (ENV["METRICS_PORT"] || 9394).to_i
+    opt :sync_and_exit, "Run the full-sync and then exit", :type => :boolean, :default => false, :required => false
   end
 
   opts
@@ -40,7 +41,13 @@ end
 metrics = TopologicalInventory::Sync::Metrics::SourcesSync.new(args[:metrics_port])
 
 topological_inventory_sync = TopologicalInventory::Sync::SourcesSyncWorker.new(args[:queue_host], args[:queue_port], metrics)
-topological_inventory_sync.run
+
+if args[:sync_and_exit]
+  # Run the initial sync and exit
+  topological_inventory_sync.initial_sync
+else
+  topological_inventory_sync.run
+end
 
 Signal.trap("TERM") do
   metrics&.stop_server

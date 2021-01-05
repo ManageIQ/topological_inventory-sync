@@ -68,7 +68,6 @@ module TopologicalInventory
           :protocol   => :Kafka,
           :host       => messaging_host,
           :port       => messaging_port,
-          :group_ref  => "topological-inventory-sync-#{queue_name}",
           :client_ref => "topological-inventory-sync-#{queue_name}"
         }
       end

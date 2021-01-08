@@ -29,8 +29,8 @@ module TopologicalInventory
           begin
             perform(message)
           rescue => err
-            metrics&.record_error
-            logger.error("#{err.message}\n#{err.backtrace.join("\n")}")
+            metrics&.record_error(:event_sync)
+            logger.error("Event sync: #{err.message}\n#{err.backtrace.join("\n")}")
           end
         end
       ensure

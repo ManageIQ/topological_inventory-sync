@@ -22,9 +22,10 @@ RSpec.describe TopologicalInventory::Sync::Metrics do
 
     describe "#record_error" do
       it "increases error counter" do
-        expect(errors_counter).to receive(:observe).with(1)
+        err_type = 'test_err'
+        expect(errors_counter).to receive(:observe).with(1, :type => err_type)
 
-        @metrics.record_error
+        @metrics.record_error(err_type)
       end
     end
   end

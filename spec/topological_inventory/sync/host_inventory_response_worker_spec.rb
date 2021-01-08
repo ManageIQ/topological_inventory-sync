@@ -4,6 +4,7 @@ require 'topological_inventory-ingress_api-client'
 RSpec.describe TopologicalInventory::Sync::ResponseWorker do
   let(:logger)      { double('logger') }
   let(:config)      { double('config') }
+  let(:metrics)     { double('metrics') }
   let(:vm_name)     { 'vm-sync-test' }
   let(:source_id)   { 'source_id' }
   let(:external_id) do
@@ -11,7 +12,7 @@ RSpec.describe TopologicalInventory::Sync::ResponseWorker do
     "/test/providers/Microsoft.Compute/virtualMachines/#{vm_name}"
   end
 
-  subject { described_class.new(config, logger) }
+  subject { described_class.new(config, logger, metrics) }
 
   describe '#register_message' do
     it 'saves external_id and related source_id' do
@@ -64,6 +65,7 @@ RSpec.describe TopologicalInventory::Sync::ResponseWorker do
       expect(logger).to receive(:error).with(
         /.*(unexpected token at 'Hello World!').*/
       )
+      expect(metrics).to receive(:record_error).with(:response)
 
       subject.send(:process_message, msg)
     end
@@ -83,8 +85,9 @@ RSpec.describe TopologicalInventory::Sync::ResponseWorker do
       end
 
       expect(logger).to receive(:debug).with(
-        "ResponseWorker: Registrated request for external_id = '#{id}' has reached the timeout and it has been removed."
+        "ResponseWorker: Registered request for external_id = '#{id}' has reached the timeout and it has been removed."
       )
+      expect(metrics).to receive(:record_error).with(:response_timeout)
 
       subject.send(:check_timeouts)
       expect(subject.send(:registered_messages).size).to eq(0)

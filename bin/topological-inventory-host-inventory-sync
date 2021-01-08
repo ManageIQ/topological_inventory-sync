@@ -6,6 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 STDOUT.sync = true
 
 require "bundler/setup"
+require "topological_inventory/sync/metrics/host_inventory_sync"
 require "topological_inventory/sync/host_inventory_sync_worker"
 require 'uri'
 
@@ -65,8 +66,18 @@ topological_inventory_url = worker_class.build_topological_inventory_url_hash(
 host_inventory_url = worker_class.build_host_inventory_url(
   args[:host_inventory_api], args[:path_prefix]
 )
-host_inventory_sync = worker_class.new(
-  topological_inventory_url, host_inventory_url, args[:queue_host], args[:queue_port], args[:metrics_port]
-)
+
+metrics = TopologicalInventory::Sync::Metrics::HostInventorySync.new(args[:metrics_port])
+
+Signal.trap("TERM") do
+  metrics&.stop_server
+  exit
+end
+
+host_inventory_sync = worker_class.new(topological_inventory_url,
+                                       host_inventory_url,
+                                       args[:queue_host],
+                                       args[:queue_port],
+                                       metrics)
 
 host_inventory_sync.run

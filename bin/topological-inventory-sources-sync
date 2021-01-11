@@ -42,13 +42,14 @@ metrics = TopologicalInventory::Sync::Metrics::SourcesSync.new(args[:metrics_por
 
 topological_inventory_sync = TopologicalInventory::Sync::SourcesSyncWorker.new(args[:queue_host], args[:queue_port], metrics)
 
+Signal.trap("TERM") do
+  metrics&.stop_server
+  exit
+end
+
 if args[:sync_and_exit]
   # Run the initial sync and exit
   topological_inventory_sync.initial_sync
 else
   topological_inventory_sync.run
-end
-
-Signal.trap("TERM") do
-  metrics&.stop_server
 end

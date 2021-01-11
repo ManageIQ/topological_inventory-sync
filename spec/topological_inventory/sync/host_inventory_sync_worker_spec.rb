@@ -1,6 +1,8 @@
 require "topological_inventory/sync/host_inventory_sync_worker"
 
 RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
+  let(:metrics) { double('metrics') }
+
   context "#topological_inventory_api (private)" do
     it "returns the initial url if provided" do
       params_hash = described_class.send(:build_topological_inventory_url_hash, "example.com", "9092", "", "")
@@ -89,7 +91,8 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
 
     let(:host_inventory_sync) do
       described_class.new(
-        "http://mock/api/", "http://mock/api/", "localhost", 9092, 0)
+        "http://mock/api/", "http://mock/api/", "localhost", 9092, metrics
+      )
     end
 
     let(:mac_addresses_1) { ["06:d5:e7:4e:c8:01", "06:d5:e7:4e:c7:01"] }
@@ -173,6 +176,7 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
         }
       )
 
+      expect(metrics).to receive(:record_error).with(:bad_request)
       expect(host_inventory_sync_service.send(:perform, message)).to be_nil
     end
   end

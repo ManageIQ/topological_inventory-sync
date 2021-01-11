@@ -7,13 +7,14 @@ module TopologicalInventory
       attr_reader :started
       alias started? started
 
-      def initialize(config, logger)
+      def initialize(config, logger, metrics)
         self.config              = config
         self.lock                = Mutex.new
-        self.timeout_lock        = Mutex.new
         self.logger              = logger
-        self.started             = Concurrent::AtomicBoolean.new(false)
+        self.metrics             = metrics
         self.registered_messages = Concurrent::Map.new
+        self.started             = Concurrent::AtomicBoolean.new(false)
+        self.timeout_lock        = Mutex.new
         self.workers             = {}
       end
 
@@ -48,7 +49,7 @@ module TopologicalInventory
 
       private
 
-      attr_accessor :config, :lock, :timeout_lock, :logger, :workers, :registered_messages
+      attr_accessor :config, :lock, :timeout_lock, :metrics, :logger, :workers, :registered_messages
       attr_writer :started
 
       def listen
@@ -61,6 +62,7 @@ module TopologicalInventory
         end
       rescue => err
         logger.error("Exception in kafka listener: #{err}\n#{err.backtrace.join("\n")}")
+        metrics.record_error(:response)
       ensure
         client&.close
       end
@@ -90,6 +92,7 @@ module TopologicalInventory
         logger.info("Topological Inventory has been updated with '#{host['display_name']}' VM (source:'#{source_id}').")
       rescue => e
         logger.error("#{e.message} -  #{e.backtrace.join("\n")}")
+        metrics&.record_error(:response)
       end
 
       def check_timeouts(threshold = config.response_timeout)
@@ -110,12 +113,14 @@ module TopologicalInventory
         #
         expired.each do |external_id|
           registered_messages.delete(external_id)
-          logger.debug("ResponseWorker: Registrated request for external_id = '#{external_id}' has reached the timeout and it has been removed.")
+          logger.debug("ResponseWorker: Registered request for external_id = '#{external_id}' has reached the timeout and it has been removed.")
+          metrics&.record_error(:response_timeout)
         end
 
         sleep(config.response_timeout_poll_time)
       rescue => err
         logger.error("Exception in maintenance worker: #{err}\n#{err.backtrace.join("\n")}")
+        metrics&.record_error(:response)
       end
 
       def save_vms_to_topological_inventory(topological_inventory_vms, source)

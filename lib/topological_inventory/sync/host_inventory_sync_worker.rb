@@ -19,13 +19,13 @@ module TopologicalInventory
 
       attr_reader :source, :sns_topic
 
-      def initialize(topological_inventory_api_params_hash, host_inventory_api, queue_host, queue_port, metrics_port)
+      def initialize(topological_inventory_api_params_hash, host_inventory_api, queue_host, queue_port, metrics)
         super(queue_host, queue_port)
         self.topological_inventory_api_params_hash = topological_inventory_api_params_hash
         self.host_inventory_api                    = host_inventory_api
-        self.metrics                               = TopologicalInventory::Sync::ApplicationMetrics.new(metrics_port, "topological_inventory_host_inventory_sync_")
+        self.metrics                               = metrics
         self.response_config                       = TopologicalInventory::Sync::Configuration.new(:queue_host => queue_host, :queue_port => queue_port)
-        self.response_worker                       = TopologicalInventory::Sync::ResponseWorker.new(response_config, logger)
+        self.response_worker                       = TopologicalInventory::Sync::ResponseWorker.new(response_config, logger, metrics)
       end
 
       def worker_name
@@ -95,6 +95,7 @@ module TopologicalInventory
 
         unless payload["external_tenant"]
           logger.error("Skipping payload because of missing :external_tenant. Payload: #{payload}")
+          metrics&.record_error(:bad_request)
           return
         end
 
@@ -129,6 +130,7 @@ module TopologicalInventory
         end
       rescue => e
         logger.error("#{e.message} -  #{e.backtrace.join("\n")}")
+        metrics&.record_error(:request)
       end
 
       def create_host_inventory_hosts(data, source)
@@ -144,6 +146,7 @@ module TopologicalInventory
         response_worker.register_message(data[:external_id], source)
       rescue => err
         logger.error("Exception in `create_host_inventory_hosts`: #{err}\n#{err.backtrace.join("\n")}")
+        metrics&.record_error(:request)
       ensure
         client&.close
       end

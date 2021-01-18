@@ -96,6 +96,9 @@ module TopologicalInventory
         end
 
         logger.info("Initial sync completed...")
+      rescue => err
+        logger.error("Full sync: #{err.message}\n#{err.backtrace.join("\n")}")
+        metrics&.record_error(:full_sync)
       end
 
       def perform(message)

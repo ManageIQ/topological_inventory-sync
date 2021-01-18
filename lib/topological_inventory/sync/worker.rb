@@ -29,8 +29,8 @@ module TopologicalInventory
           begin
             perform(message)
           rescue => err
-            metrics&.record_error
-            logger.error("#{err.message}\n#{err.backtrace.join("\n")}")
+            metrics&.record_error(:event_sync)
+            logger.error("Event sync: #{err.message}\n#{err.backtrace.join("\n")}")
           end
         end
       ensure
@@ -68,7 +68,6 @@ module TopologicalInventory
           :protocol   => :Kafka,
           :host       => messaging_host,
           :port       => messaging_port,
-          :group_ref  => "topological-inventory-sync-#{queue_name}",
           :client_ref => "topological-inventory-sync-#{queue_name}"
         }
       end

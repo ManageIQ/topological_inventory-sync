@@ -4,6 +4,8 @@ module TopologicalInventory
   class Sync
     class Metrics
       class SourcesSync < TopologicalInventory::Sync::Metrics
+        ERROR_TYPES = %i[event_sync full_sync].freeze
+
         def source_created(cnt = 1)
           @sources_created_counter&.observe(cnt)
         end

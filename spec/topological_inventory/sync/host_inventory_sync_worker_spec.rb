@@ -111,11 +111,11 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
           .with([1, 2, 3, 4, 5], "eyJpZGVudGl0eSI6eyJhY2NvdW50X251bWJlciI6ImV4dGVybmFsX3RlbmFu\ndF91dWlkIn19\n")
           .and_return(
             [
-              {"id" => "1", "source_ref" => "vm1", "mac_addresses" => mac_addresses_1},
-              {"id" => "2", "source_ref" => "vm2", "mac_addresses" => mac_addresses_2, "host_inventory_uuid" => ""},
-              {"id" => "3", "source_ref" => "vm3", "mac_addresses" => mac_addresses_3, "host_inventory_uuid" => nil},
-              {"id" => "4", "source_ref" => "vm4", "mac_addresses" => []},
-              {"id" => "5", "source_ref" => "vm5", "mac_addresses" => mac_addresses_5, "host_inventory_uuid" => "host_uuid_5"},
+              {"id" => "1", "source_ref" => "vm1", "mac_addresses" => mac_addresses_1, "guest_info" => "Red Hat Enterprise Linux"},
+              {"id" => "2", "source_ref" => "vm2", "mac_addresses" => mac_addresses_2, "host_inventory_uuid" => "", "guest_info" => "Red Hat Enterprise Linux"},
+              {"id" => "3", "source_ref" => "vm3", "mac_addresses" => mac_addresses_3, "host_inventory_uuid" => nil, "guest_info" => "Red Hat Enterprise Linux"},
+              {"id" => "4", "source_ref" => "vm4", "mac_addresses" => [], "guest_info" => "Red Hat Enterprise Linux"},
+              {"id" => "5", "source_ref" => "vm5", "mac_addresses" => mac_addresses_5, "host_inventory_uuid" => "host_uuid_5", "guest_info" => "Red Hat Enterprise Linux"},
             ]
           )
       )
@@ -189,7 +189,8 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
         :external_id     => source_ref,
         :display_name    => nil,
         :reporter        => "topological-inventory",
-        :stale_timestamp => (Time.now.utc + 86_400).to_datetime
+        :stale_timestamp => (Time.now.utc + 86_400).to_datetime,
+        :system_profile  => { :is_marketplace => true }
       },
       source
     ]

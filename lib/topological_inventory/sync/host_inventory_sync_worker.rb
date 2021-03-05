@@ -115,7 +115,7 @@ module TopologicalInventory
         topological_inventory_vms.each do |host|
           # Skip processing if we've already created this host in Host Based
           next if !host["host_inventory_uuid"].nil? && !host["host_inventory_uuid"].empty?
-          next unless is_rhel?(host)
+          next unless rhel?(host)
 
           data = {
             :display_name    => host["name"],
@@ -124,7 +124,7 @@ module TopologicalInventory
             :account         => account_number,
             :reporter        => HOST_INVENTORY_REPORTER,
             :stale_timestamp => stale_timestamp,
-            :system_profile  => { :is_marketplace => is_marketplace?(host) }
+            :system_profile  => {:is_marketplace => marketplace?(host)}
           }
 
           # TODO(lsmola) use the possibility to create batch of VMs in Host Inventory
@@ -135,12 +135,12 @@ module TopologicalInventory
         metrics&.record_error(:request)
       end
 
-      def is_rhel?(host)
+      def rhel?(host)
         host["guest_info"] == "Red Hat BYOL Linux" ||
-        host["guest_info"] == "Red Hat Enterprise Linux"
+          host["guest_info"] == "Red Hat Enterprise Linux"
       end
 
-      def is_marketplace?(host)
+      def marketplace?(host)
         host["guest_info"] != "Red Hat BYOL Linux"
       end
 

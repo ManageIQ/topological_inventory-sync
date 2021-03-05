@@ -190,7 +190,7 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
         :display_name    => nil,
         :reporter        => "topological-inventory",
         :stale_timestamp => (Time.now.utc + 86_400).to_datetime,
-        :system_profile  => { :is_marketplace => true }
+        :system_profile  => {:is_marketplace => true}
       },
       source
     ]

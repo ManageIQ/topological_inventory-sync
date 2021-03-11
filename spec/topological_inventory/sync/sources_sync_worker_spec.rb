@@ -189,6 +189,62 @@ RSpec.describe TopologicalInventory::Sync::SourcesSyncWorker do
           {"source_id" => source.id, "tenant" => tenant.external_tenant, "application_type_id" => "1"}
         end
 
+        context "and API raises an exception" do
+          let(:messaging_client) { double('messaging_client') }
+
+          before do
+            allow(sources_api_client).to receive(:list_source_applications).and_raise(api_exception)
+
+            allow(sources_sync).to receive(:initial_sync)
+
+            allow(ManageIQ::Messaging::Client).to receive(:open).and_return(messaging_client)
+            allow(messaging_client).to receive(:subscribe_topic).and_yield(message)
+            allow(messaging_client).to receive(:close)
+          end
+
+          context "and Source doesn't exist" do
+            let(:api_exception) { ::SourcesApiClient::ApiError.new(:code          => 404, :response_headers => {},
+                                                                   :response_body => { :errors => [{ :status => "404",
+                                                                                                     :detail => "Record not found" }] }.to_json) }
+            it "doesn't log error" do
+              expect(metrics).not_to receive(:source_destroyed)
+              expect(metrics).not_to receive(:record_error).with(:event_sync)
+              expect(sources_sync.logger).not_to receive(:error)
+
+              sources_sync.send(:run)
+            end
+          end
+
+          context "and API returns HTTP 500" do
+            let(:api_exception) { ::SourcesApiClient::ApiError.new(:code          => 500, :response_headers => {},
+                                                                   :response_body => { :errors => [{ :status => "500",
+                                                                                                     :detail => "Some unknown error" }] }.to_json) }
+            it "logs error and increases metrics" do
+              expect(metrics).not_to receive(:source_destroyed)
+              expect(metrics).to receive(:record_error).with(:event_sync)
+              expect(sources_sync.logger).to receive(:error)
+
+              sources_sync.send(:run)
+            end
+          end
+
+          context "and perform returns some other exception" do
+            let(:api_exception) { ::ArgumentError.new("Something bad configured") }
+
+            before do
+              allow(sources_sync).to receive(:perform).and_raise(api_exception)
+            end
+
+            it "logs error and increases metrics" do
+              expect(metrics).not_to receive(:source_destroyed)
+              expect(metrics).to receive(:record_error).with(:event_sync)
+              expect(sources_sync.logger).to receive(:error)
+
+              sources_sync.send(:run)
+            end
+          end
+        end
+
         context "when no application is remaining" do
           it "deletes the source" do
             expect(metrics).to receive(:source_destroyed).with(1)

@@ -29,8 +29,12 @@ module TopologicalInventory
           begin
             perform(message)
           rescue => err
-            metrics&.record_error(:event_sync)
-            logger.error("Event sync: #{err.message}\n#{err.backtrace.join("\n")}")
+            # i.e. 404 can be raised by cascade delete of Source with Application.destroy event
+            # it's not an error
+            unless err.kind_of?(::SourcesApiClient::ApiError) && err.code == 404
+              metrics&.record_error(:event_sync)
+              logger.error("Event sync: #{err.message}\n#{err.backtrace.join("\n")}")
+            end
           end
         end
       ensure

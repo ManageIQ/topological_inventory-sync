@@ -115,7 +115,10 @@ module TopologicalInventory
         topological_inventory_vms.each do |host|
           # Skip processing if we've already created this host in Host Based
           next if !host["host_inventory_uuid"].nil? && !host["host_inventory_uuid"].empty?
+          # Only send RHEL hosts to HBI
           next unless rhel?(host)
+          # HBI requires MAC address, so hosts without MAC address are not sent
+          next if host["mac_addresses"].to_a.empty?
 
           data = {
             :display_name    => host["name"],

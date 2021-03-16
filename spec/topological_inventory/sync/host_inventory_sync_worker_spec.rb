@@ -135,7 +135,8 @@ RSpec.describe TopologicalInventory::Sync::HostInventorySyncWorker do
           .with(*make_host_arg(mac_addresses_3, "vm3"))
       )
 
-      expect(host_inventory_sync_service).to(
+      # HBI requires MAC address, so hosts without MAC address are not sent.
+      expect(host_inventory_sync_service).to_not(
         receive(:create_host_inventory_hosts)
           .with(*make_host_arg([], "vm4"))
       )

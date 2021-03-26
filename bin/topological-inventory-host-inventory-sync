@@ -8,6 +8,8 @@ STDOUT.sync = true
 require "bundler/setup"
 require "topological_inventory/sync/metrics/host_inventory_sync"
 require "topological_inventory/sync/host_inventory_sync_worker"
+require "topological_inventory/sync/clowder_config"
+
 require 'uri'
 
 def parse_args
@@ -51,6 +53,9 @@ def worker_class
 end
 
 args = parse_args
+if TopologicalInventory::Sync::ClowderConfig.clowder_enabled?
+  TopologicalInventory::Sync::ClowderConfig.fill_args(args)
+end
 
 ingress_api_uri = worker_class.build_topological_inventory_ingress_url(
     args[:topological_inventory_ingress_api_service_host], args[:topological_inventory_ingress_api_service_port]

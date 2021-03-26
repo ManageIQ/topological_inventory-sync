@@ -8,6 +8,7 @@ STDOUT.sync = true
 require "bundler/setup"
 require "topological_inventory/sync/inventory_upload/validator_worker"
 require "topological_inventory/schema"
+require "topological_inventory/sync/clowder_config"
 
 def parse_args
   require 'optimist'
@@ -22,6 +23,9 @@ def parse_args
 end
 
 args = parse_args
+if TopologicalInventory::Sync::ClowderConfig.clowder_enabled?
+  TopologicalInventory::Sync::ClowderConfig.fill_args(args)
+end
 
 topological_inventory_sync = TopologicalInventory::Sync::InventoryUpload::ValidatorWorker.new(args[:queue_host], args[:queue_port])
 topological_inventory_sync.run

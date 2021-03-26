@@ -2,6 +2,7 @@ require "rest-client"
 require "topological_inventory/sync/worker"
 require "topological_inventory/sync/iterator"
 require "topological_inventory/sync/metrics/sources_sync"
+require "topological_inventory/sync/clowder_config"
 require "more_core_extensions/core_ext/module/cache_with_timeout"
 require "uri"
 
@@ -22,7 +23,7 @@ module TopologicalInventory
       end
 
       def queue_name
-        "platform.sources.event-stream"
+        TopologicalInventory::Sync::ClowderConfig.kafka_topic("platform.sources.event-stream")
       end
 
       def persist_ref

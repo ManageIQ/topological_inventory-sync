@@ -7,6 +7,9 @@ objects:
   kind: ClowdApp
   metadata:
     name: topo-sync
+    labels:
+      app: topological-inventory
+      clowdapp: topo-sync
   spec:
     envName: ${ENV_NAME}
     jobs:
@@ -127,6 +130,8 @@ objects:
     - topicName: platform.inventory.events # consumer / sync-hbi
       partitions: 3
       replicas: 3
+    # - topicName: platform.upload.available
+    # - topicName: platform.upload.topological-inventory
 parameters:
 - name: APP_NAME
   displayName: Application Name

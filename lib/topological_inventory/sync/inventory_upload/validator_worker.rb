@@ -1,6 +1,7 @@
 require "json"
 require "topological_inventory/sync/worker"
 require "topological_inventory/sync/inventory_upload/payload"
+require "topological_inventory/sync/clowder_config"
 
 module TopologicalInventory
   class Sync
@@ -13,7 +14,7 @@ module TopologicalInventory
         end
 
         def queue_name
-          "platform.upload.topological-inventory"
+          TopologicalInventory::Sync::ClowderConfig.kafka_topic("platform.upload.topological-inventory")
         end
 
         def persist_ref

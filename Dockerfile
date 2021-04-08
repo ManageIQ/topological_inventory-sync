@@ -18,6 +18,12 @@ ENV WORKDIR /opt/topological_inventory-sync/
 ENV RAILS_ROOT $WORKDIR
 WORKDIR $WORKDIR
 
+# For the clowder config parser
+RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq \
+  && chmod +x ./jq && cp jq /usr/bin
+
+RUN touch /opt/rdsca.crt && chmod 666 /opt/rdsca.crt
+
 COPY Gemfile $WORKDIR
 RUN echo "gem: --no-document" > ~/.gemrc && \
     gem install bundler --conservative --without development:test && \

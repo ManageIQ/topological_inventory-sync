@@ -3,10 +3,11 @@ source "https://rubygems.org"
 plugin "bundler-inject", "~> 1.1"
 require File.join(Bundler::Plugin.index.load_paths("bundler-inject")[0], "bundler-inject") rescue nil
 
-gem "cloudwatchlogger", "~> 0.2.1"
-gem "http",             "~> 4.1.0", :require => false
-gem "json-stream",      "~> 0.2.0", :require => false
-gem "manageiq-loggers", "~> 0.4.0", ">= 0.4.2"
+gem "clowder-common-ruby", "~> 0.2.2"
+gem "cloudwatchlogger",    "~> 0.2.1"
+gem "http",                "~> 4.1.0", :require => false
+gem "json-stream",         "~> 0.2.0", :require => false
+gem "manageiq-loggers",    "~> 0.4.0", ">= 0.4.2"
 gem "manageiq-messaging"
 gem "more_core_extensions"
 gem "optimist"

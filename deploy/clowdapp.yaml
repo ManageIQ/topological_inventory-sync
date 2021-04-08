@@ -1,0 +1,225 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: topological-inventory-sync
+objects:
+- apiVersion: cloud.redhat.com/v1alpha1
+  kind: ClowdApp
+  metadata:
+    name: topo-sync
+  spec:
+    envName: ${ENV_NAME}
+    jobs:
+    - name: sources-full
+      schedule: ${SCHEDULE_SOURCES_SYNC_JOB}
+      concurrencyPolicy: Forbid
+      restartPolicy: Never
+      startingDeadlineSeconds: 30
+      podSpec:
+        image: ${IMAGE}:${IMAGE_TAG}
+        args:
+        - bin/topological-inventory-sources-sync
+        - --sync-and-exit
+        env:
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: topological-inventory-api-secrets
+              key: encryption-key
+        - name: LOG_LEVEL
+          value: ${LOG_LEVEL}
+        - name: SOURCES_HOST
+          value: ${SOURCES_HOST}
+        - name: SOURCES_PORT
+          value: ${SOURCES_PORT}
+        - name: SOURCES_SCHEME
+          value: ${SOURCES_SCHEME}
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT_SOURCES_SYNC_JOB}
+            memory: ${MEMORY_LIMIT_SOURCES_SYNC_JOB}
+          requests:
+            cpu: ${CPU_REQUEST_SOURCES_SYNC_JOB}
+            memory: ${MEMORY_REQUEST_SOURCES_SYNC_JOB}
+    deployments:
+    - name: sources
+      minReplicas: ${{MIN_REPLICAS_SOURCES_SYNC}}
+      podSpec:
+        image: ${IMAGE}:${IMAGE_TAG}
+        args:
+        - run_sources_sync
+        env:
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: topological-inventory-api-secrets
+              key: encryption-key
+        - name: LOG_LEVEL
+          value: ${LOG_LEVEL}
+        - name: SOURCES_HOST
+          value: ${SOURCES_HOST}
+        - name: SOURCES_PORT
+          value: ${SOURCES_PORT}
+        - name: SOURCES_SCHEME
+          value: ${SOURCES_SCHEME}
+        livenessProbe:
+          exec:
+            command:
+            - bash
+            - -c
+            - ncat $DATABASE_HOST $DATABASE_PORT -z -w 1 >/dev/null 2>&1
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT_SOURCES_SYNC}
+            memory: ${MEMORY_LIMIT_SOURCES_SYNC}
+          requests:
+            cpu: ${CPU_REQUEST_SOURCES_SYNC}
+            memory: ${MEMORY_REQUEST_SOURCES_SYNC}
+    - name: host-inventory
+      minReplicas: ${{MIN_REPLICAS_HOST_INV_SYNC}}
+      podSpec:
+        image: ${IMAGE}:${IMAGE_TAG}
+        command:
+        - bin/topological-inventory-host-inventory-sync
+        env:
+        - name: APP_NAME
+          value: ${APP_NAME}
+        - name: HOST_INVENTORY_API
+          value: ${HOST_INVENTORY_SCHEME}://${HOST_INVENTORY_HOST}:${HOST_INVENTORY_PORT}
+        - name: PATH_PREFIX
+          value: ${PATH_PREFIX}
+        - name: TOPOLOGICAL_INVENTORY_HOST
+          value: ${TOPOLOGICAL_INVENTORY_HOST}
+        - name: TOPOLOGICAL_INVENTORY_PORT
+          value: ${TOPOLOGICAL_INVENTORY_PORT}
+        - name: TOPOLOGICAL_INVENTORY_SCHEME}
+          value: ${TOPOLOGICAL_INVENTORY_SCHEME}
+        - name: TOPOLOGICAL_INVENTORY_INGRESS_API_HOST
+          value: ${TOPOLOGICAL_INVENTORY_INGRESS_API_HOST}
+        - name: TOPOLOGICAL_INVENTORY_INGRESS_API_PORT
+          value: ${TOPOLOGICAL_INVENTORY_INGRESS_API_PORT}
+        - name: TOPOLOGICAL_INVENTORY_INGRESS_API_SCHEME}
+          value: ${TOPOLOGICAL_INVENTORY_INGRESS_API_SCHEME}
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT_HOST_INV_SYNC}
+            memory: ${MEMORY_LIMIT_HOST_INV_SYNC}
+          requests:
+            cpu: ${CPU_REQUEST_HOST_INV_SYNC}
+            memory: ${MEMORY_REQUEST_HOST_INV_SYNC}
+    database:
+      sharedDbAppName: topo-api
+    dependencies:
+    - topo-api
+    kafkaTopics:
+    - topicName: platform.sources.event-stream # consumer / sync-sources
+      partitions: 3
+      replicas: 3
+    - topicName: platform.topological-inventory.persister-output-stream # consumer / sync-hbi
+      partitions: 3
+      replicas: 3
+    - topicName: platform.inventory.host-ingress # producer / sync-hbi
+      partitions: 3
+      replicas: 3
+    - topicName: platform.inventory.events # consumer / sync-hbi
+      partitions: 3
+      replicas: 3
+    # - topicName: platform.upload.available
+    # - topicName: platform.upload.topological-inventory
+parameters:
+- name: APP_NAME
+  displayName: Application Name
+  description: Application name to be used in request paths. Only used when PATH_PREFIX is also specified.
+  value: topological-inventory
+- name: CPU_LIMIT_SOURCES_SYNC
+  value: 200m
+- name: CPU_LIMIT_HOST_INV_SYNC
+  value: 200m
+- name: CPU_REQUEST_SOURCES_SYNC
+  value: 100m
+- name: CPU_REQUEST_HOST_INV_SYNC
+  value: 100m
+- description: Clowder ENV
+  name: ENV_NAME
+  required: true
+- name: HOST_INVENTORY_HOST
+  displayName: Host-based Inventory Service Host
+  description: Host to use for the host-based inventory service URL.
+  value: insights-inventory
+- name: HOST_INVENTORY_PORT
+  displayName: Host-based Inventory Service Port
+  description: Port to use for the host-based inventory service URL.
+  required: true
+  value: "8080"
+- name: HOST_INVENTORY_SCHEME
+  displayName: Host-based Inventory Service Scheme
+  description: Scheme to use for the host-based inventory service URL. Can be either http or https
+  required: true
+  value: http
+- description: Image
+  name: IMAGE
+  value: quay.io/cloudservices/topological-inventory-sync
+- description: Image tag
+  name: IMAGE_TAG
+  required: true
+- name: LOG_LEVEL
+  value: WARN
+- name: MEMORY_LIMIT_SOURCES_SYNC
+  value: 300m
+- name: MEMORY_LIMIT_HOST_INV_SYNC
+  value: 600Mi
+- name: MEMORY_REQUEST_SOURCES_SYNC
+  value: 100m
+- name: MEMORY_REQUEST_HOST_INV_SYNC
+  value: 100Mi
+- description: The number of replicas to use for the prometheus deployment
+  displayName: Min replicas for topo-sync-sources
+  name: MIN_REPLICAS_SOURCES_SYNC
+  value: '1'
+- description: The number of replicas to use for the prometheus deployment
+  displayName: Min replicas for topo-sync-host-inventory
+  name: MIN_REPLICAS_HOST_INV_SYNC
+  value: '1'
+- name: PATH_PREFIX
+  displayName: Path Prefix
+  description: Base path for the API
+- description: Scheme to use for the Sources service URL.
+  displayName: Sources Service Scheme
+  name: SOURCES_SCHEME
+  value: http
+- description: Host to use for the Sources service URL.
+  displayName: Sources Service Host
+  name: SOURCES_HOST
+  required: true
+  value: sources-api-svc
+- description: Port to use for the Sources service URL.
+  displayName: Sources Service Port
+  name: SOURCES_PORT
+  value: '8000'
+- name: TOPOLOGICAL_INVENTORY_HOST
+  displayName: Topological Inventory Host
+  description: Host to use for the topological inventory service URL.
+  value: topo-api-svc
+- name: TOPOLOGICAL_INVENTORY_PORT
+  displayName: Topological Inventory Port
+  description: Port to use for the topological inventory service URL.
+  value: "8000"
+- name: TOPOLOGICAL_INVENTORY_SCHEME
+  displayName: Topological Inventory Scheme
+  description: Scheme to use for the topological inventory service URL. Can be either http or https
+  value: http
+- name: TOPOLOGICAL_INVENTORY_INGRESS_API_HOST
+  displayName: Topological Inventory Ingress API Host
+  description: Host to use for the topological inventory ingress api service URL.
+  value: topo-ingress-api-svc
+- name: TOPOLOGICAL_INVENTORY_INGRESS_API_PORT
+  displayName: Topological Inventory Ingress API Port
+  description: Port to use for the topological inventory ingress api service URL.
+  value: "8000"
+- name: TOPOLOGICAL_INVENTORY_INGRESS_API_SCHEME
+  displayName: Topological Inventory Ingress API Scheme
+  description: Scheme to use for the topological inventory ingress api service URL. Can be either http or https
+  value: http

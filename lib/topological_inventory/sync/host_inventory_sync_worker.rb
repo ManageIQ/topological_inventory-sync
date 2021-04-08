@@ -7,6 +7,7 @@ require "topological_inventory-ingress_api-client"
 require "topological_inventory/providers/common/save_inventory/saver"
 require "topological_inventory/sync/configuration"
 require "topological_inventory/sync/host_inventory_response_worker"
+require "topological_inventory/sync/clowder_config"
 
 module TopologicalInventory
   class Sync
@@ -150,7 +151,7 @@ module TopologicalInventory
       def create_host_inventory_hosts(data, source)
         client = ManageIQ::Messaging::Client.open(:protocol => :Kafka, :host => messaging_host, :port => messaging_port)
         client.publish_message(
-          :service => 'platform.inventory.host-ingress',
+          :service => TopologicalInventory::Sync::ClowderConfig.kafka_topic('platform.inventory.host-ingress'),
           :message => 'update_host_inventory',
           :payload => {
             "operation" => "add_host",

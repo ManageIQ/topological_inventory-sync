@@ -1,3 +1,5 @@
+require "topological_inventory/sync/clowder_config"
+
 module TopologicalInventory
   class Sync
     class Configuration
@@ -26,7 +28,7 @@ module TopologicalInventory
         @queue_max_bytes   = nil
         @queue_persist_ref = ENV['HOSTNAME']
         @queue_port        = queue_port
-        @queue_topic       = 'platform.inventory.events'
+        @queue_topic       = TopologicalInventory::Sync::ClowderConfig.kafka_topic('platform.inventory.events')
 
         @response_timeout           = 1.hour
         @response_timeout_poll_time = 1.hour

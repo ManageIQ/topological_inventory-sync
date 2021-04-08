@@ -15,7 +15,7 @@ gem "rest-client",      ">= 1.8.0"
 
 gem "sources-api-client", "~> 1.0"
 gem "topological_inventory-ingress_api-client", "~> 1.0", ">= 1.0.1"
-gem "topological_inventory-core", "~> 1.1.1"
+gem "topological_inventory-core", "~> 1.2.1"
 gem "topological_inventory-api-client", "~> 2.0"
 gem "topological_inventory-providers-common", "~> 0.1"
 

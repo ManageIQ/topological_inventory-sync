@@ -7,9 +7,6 @@ objects:
   kind: ClowdApp
   metadata:
     name: topo-sync
-    labels:
-      app: topological-inventory
-      clowdapp: topo-sync
   spec:
     envName: ${ENV_NAME}
     jobs:

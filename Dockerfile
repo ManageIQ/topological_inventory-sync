@@ -9,6 +9,8 @@ RUN dnf -y --disableplugin=subscription-manager module enable ruby:2.6 && \
       git make redhat-rpm-config \
       # For checking service status
       nmap-ncat \
+      # For the mimemagic gem
+      shared-mime-info \
       # Libraries
       postgresql-devel libxml2-devel \
       && \

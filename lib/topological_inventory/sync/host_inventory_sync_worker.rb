@@ -115,6 +115,10 @@ module TopologicalInventory
         topological_inventory_vms.each do |host|
           # Skip processing if we've already created this host in Host Based
           next if !host["host_inventory_uuid"].nil? && !host["host_inventory_uuid"].empty?
+          # Only send RHEL hosts to HBI
+          next unless rhel?(host)
+          # HBI requires MAC address, so hosts without MAC address are not sent
+          next if host["mac_addresses"].to_a.empty?
 
           data = {
             :display_name    => host["name"],
@@ -122,7 +126,8 @@ module TopologicalInventory
             :mac_addresses   => host["mac_addresses"],
             :account         => account_number,
             :reporter        => HOST_INVENTORY_REPORTER,
-            :stale_timestamp => stale_timestamp
+            :stale_timestamp => stale_timestamp,
+            :system_profile  => {:is_marketplace => marketplace?(host)}
           }
 
           # TODO(lsmola) use the possibility to create batch of VMs in Host Inventory
@@ -131,6 +136,15 @@ module TopologicalInventory
       rescue => e
         logger.error("#{e.message} -  #{e.backtrace.join("\n")}")
         metrics&.record_error(:request)
+      end
+
+      def rhel?(host)
+        host["guest_info"] == "Red Hat BYOL Linux" ||
+          host["guest_info"] == "Red Hat Enterprise Linux"
+      end
+
+      def marketplace?(host)
+        host["guest_info"] != "Red Hat BYOL Linux"
       end
 
       def create_host_inventory_hosts(data, source)

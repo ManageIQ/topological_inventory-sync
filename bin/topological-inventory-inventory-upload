@@ -16,9 +16,9 @@ def parse_args
     opt :queue_port, "Port of the Platform's kafka queue", :type => :int,
         :default => (ENV.fetch("QUEUE_PORT", 9092)).to_i, :required => false
     opt :ingress_api_host, "Ingress API service URL", :type => :string,
-        :default => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_HOST"] || "localhost"
+        :default => ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_HOST"] || "localhost"
     opt :ingress_api_port, "Ingress API service URL port", :type => :int,
-        :default => (ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SERVICE_PORT"] || 9292).to_i
+        :default => (ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_PORT"] || 9292).to_i
   end
 
   opts
@@ -35,15 +35,15 @@ end
 
 require "topological_inventory-ingress_api-client"
 TopologicalInventoryIngressApiClient.configure do |config|
-  config.scheme = "http"
+  config.scheme = ENV["TOPOLOGICAL_INVENTORY_INGRESS_API_SCHEME"] || "http"
   config.host   = "#{args[:ingress_api_host]}:#{args[:ingress_api_port]}"
   config.logger = TopologicalInventory::Sync.logger
 end
 
 require 'topological_inventory-api-client'
 TopologicalInventoryApiClient.configure do |config|
-  config.scheme = "http"
-  config.host = "#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_HOST"]}:#{ENV["TOPOLOGICAL_INVENTORY_API_SERVICE_PORT"]}"
+  config.scheme = ENV["TOPOLOGICAL_INVENTORY_SCHEME"] || "http"
+  config.host = "#{ENV["TOPOLOGICAL_INVENTORY_HOST"]}:#{ENV["TOPOLOGICAL_INVENTORY_PORT"]}"
 end
 
 topological_inventory_sync = TopologicalInventory::Sync::InventoryUpload::ProcessorWorker.new(args[:queue_host], args[:queue_port])
